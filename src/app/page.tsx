@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import ChatPanel, { MODELS } from "@/components/ChatPanel";
+import DrawingCanvas from "@/components/DrawingCanvas";
 import { readSSEStream } from "@/lib/sse";
 import { parseModelResponse } from "@/lib/parse-response";
 import type { Message } from "@/components/ChatPanel";
@@ -19,6 +20,8 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [model, setModel] = useState(MODELS[0].id);
+  const [annotating, setAnnotating] = useState(false);
+  const [annotationImage, setAnnotationImage] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -129,18 +132,13 @@ export default function Home() {
     setPipContainer(null);
   }, [stream, pipWindow]);
 
-  const handleSend = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      const text = input.trim();
-      if (!text || loading || !sharing) return;
-
-      const image = captureFrame();
-      if (!image) return;
-
-      const userMsg: Message = { role: "user", content: text };
+  const sendMessage = useCallback(
+    async (image: string, text: string, strokeText?: string) => {
+      const textWithStrokes = strokeText
+        ? `${text}\n\n[ANNOTATION_STROKES]\n${strokeText}`
+        : text;
+      const userMsg: Message = { role: "user", content: text, screenshot: image };
       setMessages((prev) => [...prev, userMsg]);
-      setInput("");
       setLoading(true);
 
       // Attach image only to the latest user message
@@ -150,7 +148,7 @@ export default function Home() {
             role: "user" as const,
             content: [
               { type: "image_url" as const, image_url: { url: image } },
-              { type: "text" as const, text: m.content },
+              { type: "text" as const, text: textWithStrokes },
             ],
           };
         }
@@ -209,8 +207,46 @@ export default function Home() {
         setLoading(false);
       }
     },
-    [input, loading, sharing, captureFrame, messages, model]
+    [messages, model]
   );
+
+  const handleSend = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const text = input.trim();
+      if (!text || loading || !sharing) return;
+
+      const image = captureFrame();
+      if (!image) return;
+
+      setInput("");
+      await sendMessage(image, text);
+    },
+    [input, loading, sharing, captureFrame, sendMessage]
+  );
+
+  const startAnnotation = useCallback(() => {
+    if (!sharing || loading) return;
+    const image = captureFrame();
+    if (!image) return;
+    setAnnotationImage(image);
+    setAnnotating(true);
+    window.focus();
+  }, [captureFrame, loading, sharing]);
+
+  const handleAnnotationSend = useCallback(
+    async (compositedImage: string, text: string, strokeText: string) => {
+      setAnnotating(false);
+      setAnnotationImage(null);
+      await sendMessage(compositedImage, text, strokeText);
+    },
+    [sendMessage]
+  );
+
+  const cancelAnnotation = useCallback(() => {
+    setAnnotating(false);
+    setAnnotationImage(null);
+  }, []);
 
   return (
     <div className="flex h-screen flex-col items-center justify-center bg-zinc-950 text-zinc-200">
@@ -232,11 +268,19 @@ export default function Home() {
             onInputChange={setInput}
             onSubmit={handleSend}
             onModelChange={setModel}
+            onAnnotate={startAnnotation}
           />,
           pipContainer
         )}
 
       {sharing ? (
+        annotating && annotationImage ? (
+          <DrawingCanvas
+            image={annotationImage}
+            onSend={handleAnnotationSend}
+            onCancel={cancelAnnotation}
+          />
+        ) : (
         <div className="flex flex-col items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-green-500" />
@@ -263,6 +307,7 @@ export default function Home() {
             Stop Sharing
           </button>
         </div>
+        )
       ) : (
         <div className="flex flex-col items-center gap-6">
           <h1 className="text-2xl font-bold">SketchVLM Demo</h1>

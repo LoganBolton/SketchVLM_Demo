@@ -24,6 +24,7 @@ interface ChatPanelProps {
   onInputChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onModelChange: (value: string) => void;
+  onAnnotate?: () => void;
 }
 
 export { MODELS };
@@ -36,6 +37,7 @@ export default function ChatPanel({
   onInputChange,
   onSubmit,
   onModelChange,
+  onAnnotate,
 }: ChatPanelProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -97,6 +99,16 @@ export default function ChatPanel({
                 </div>
               )}
 
+            {m.role === "user" && m.screenshot && (
+              <div className="mb-1.5">
+                <img
+                  src={m.screenshot}
+                  alt="Annotated screenshot"
+                  className="max-h-48 w-full rounded border border-zinc-800 object-contain"
+                />
+              </div>
+            )}
+
             <div
               className={`rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
                 m.role === "user"
@@ -120,6 +132,26 @@ export default function ChatPanel({
         onSubmit={onSubmit}
         className="flex items-center gap-2 border-t border-zinc-800 px-3 py-2"
       >
+        {onAnnotate && (
+          <button
+            type="button"
+            onClick={onAnnotate}
+            title="Annotate Screen"
+            className="rounded bg-zinc-800 p-1.5 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="h-4 w-4"
+            >
+              <path d="M12 20h9" />
+              <path d="m16.5 3.5 4 4L7 21l-4 1 1-4Z" />
+            </svg>
+          </button>
+        )}
         <input
           ref={inputRef}
           type="text"
