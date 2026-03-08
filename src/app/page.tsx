@@ -67,8 +67,8 @@ export default function Home() {
     }
 
     const pip = await window.documentPictureInPicture.requestWindow({
-      width: 400,
-      height: 500,
+      width: 600,
+      height: 750,
     });
 
     copyStylesToWindow(pip);
