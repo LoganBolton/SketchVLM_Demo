@@ -116,7 +116,7 @@ const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     "X-Title": "SketchVLM Demo"
   },
   body: JSON.stringify({
-    model: selectedModel, // e.g. "google/gemini-2.5-flash"
+    model: selectedModel,
     messages: [
       {
         role: "user",
@@ -143,7 +143,7 @@ const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
 
 Provide a dropdown in the top bar to select from these OpenRouter models (all support vision):
 
-- `google/gemini-3.0-flash`
+- `google/gemini-3-flash-preview`
 - `google/gemini-3.1-flash-lite-preview`
 
 ### Conversation History
