@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import ChatPanel, { MODELS } from "@/components/ChatPanel";
 import { readSSEStream } from "@/lib/sse";
+import { parseModelResponse } from "@/lib/parse-response";
 import type { Message } from "@/components/ChatPanel";
 
 const MAX_CAPTURE_WIDTH = 1920;
@@ -167,19 +168,33 @@ export default function Home() {
           throw new Error((await res.text()) || res.statusText);
         }
 
-        let assistantText = "";
         setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
+        let fullText = "";
         await readSSEStream(res, (delta) => {
-          assistantText += delta;
+          fullText += delta;
           setMessages((prev) => {
             const updated = [...prev];
             updated[updated.length - 1] = {
               role: "assistant",
-              content: assistantText,
+              content: fullText,
             };
             return updated;
           });
+        });
+
+        // Parse response for annotations
+        const parsed = parseModelResponse(fullText);
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: parsed.answer,
+            screenshot: parsed.annotations.length > 0 ? image : undefined,
+            annotations:
+              parsed.annotations.length > 0 ? parsed.annotations : undefined,
+          };
+          return updated;
         });
       } catch (err) {
         console.error("Chat error:", err);

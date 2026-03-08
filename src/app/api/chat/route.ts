@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { SYSTEM_PROMPT } from "@/lib/prompts";
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -19,8 +20,8 @@ export async function POST(req: NextRequest) {
         "X-Title": "SketchVLM Demo",
       },
       body: JSON.stringify({
-        model: model || "google/gemini-3.0-flash",
-        messages,
+        model: model || "google/gemini-3-flash-preview",
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
         stream: true,
       }),
     }

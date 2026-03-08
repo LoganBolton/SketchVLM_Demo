@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import AnnotationOverlay from "./AnnotationOverlay";
+import type { Annotation } from "@/lib/parse-response";
 
 const MODELS = [
   { id: "google/gemini-3-flash-preview", label: "Gemini 3.0 Flash" },
@@ -10,6 +12,8 @@ const MODELS = [
 export interface Message {
   role: "user" | "assistant";
   content: string;
+  screenshot?: string;
+  annotations?: Annotation[];
 }
 
 interface ChatPanelProps {
@@ -80,6 +84,19 @@ export default function ChatPanel({
             <div className="mb-0.5 text-xs font-medium text-zinc-500">
               {m.role === "user" ? "You" : "AI"}
             </div>
+
+            {m.role === "assistant" &&
+              m.screenshot &&
+              m.annotations &&
+              m.annotations.length > 0 && (
+                <div className="mb-1.5">
+                  <AnnotationOverlay
+                    screenshot={m.screenshot}
+                    annotations={m.annotations}
+                  />
+                </div>
+              )}
+
             <div
               className={`rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
                 m.role === "user"
