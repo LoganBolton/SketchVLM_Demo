@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, forwardRef } from "react";
 
 type Tool = "pen" | "arrow" | "rect";
 
@@ -18,14 +18,21 @@ type Stroke = {
 
 interface DrawingCanvasProps {
   image: string;
-  onSend: (compositedImage: string, text: string, strokeText: string) => void;
-  onCancel: () => void;
+  onSend?: (compositedImage: string, text: string, strokeText: string) => void;
+  onCancel?: () => void;
+  embedded?: boolean;
+}
+
+export interface DrawingCanvasHandle {
+  getCompositedImage: () => Promise<string | null>;
+  getStrokeText: () => string;
+  hasStrokes: () => boolean;
 }
 
 const COLORS = ["#ff3b30", "#34c759", "#0a84ff", "#ffd60a", "#ffffff", "#64d2ff"];
 const LINE_WIDTHS = [2, 4, 6];
 
-export default function DrawingCanvas({ image, onSend, onCancel }: DrawingCanvasProps) {
+const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(function DrawingCanvas({ image, onSend, onCancel, embedded }, ref) {
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
@@ -211,10 +218,7 @@ export default function DrawingCanvas({ image, onSend, onCancel }: DrawingCanvas
       .join("\n");
   }, [currentStroke, strokes]);
 
-  const handleSend = useCallback(async () => {
-    const message = text.trim();
-    if (!message) return;
-
+  const getCompositedImage = useCallback(async (): Promise<string | null> => {
     const img = new Image();
     img.src = image;
     await img.decode();
@@ -223,13 +227,28 @@ export default function DrawingCanvas({ image, onSend, onCancel }: DrawingCanvas
     composite.width = img.naturalWidth;
     composite.height = img.naturalHeight;
     const ctx = composite.getContext("2d");
-    if (!ctx || !canvasRef.current) return;
+    if (!ctx || !canvasRef.current) return null;
 
     ctx.drawImage(img, 0, 0, composite.width, composite.height);
     ctx.drawImage(canvasRef.current, 0, 0, composite.width, composite.height);
+    return composite.toDataURL("image/jpeg", 0.7);
+  }, [image]);
 
-    onSend(composite.toDataURL("image/jpeg", 0.7), message, buildStrokeText());
-  }, [buildStrokeText, image, onSend, text]);
+  useImperativeHandle(ref, () => ({
+    getCompositedImage,
+    getStrokeText: buildStrokeText,
+    hasStrokes: () => strokes.length > 0 || currentStroke !== null,
+  }), [getCompositedImage, buildStrokeText, strokes, currentStroke]);
+
+  const handleSend = useCallback(async () => {
+    const message = text.trim();
+    if (!message || !onSend) return;
+
+    const composited = await getCompositedImage();
+    if (!composited) return;
+
+    onSend(composited, message, buildStrokeText());
+  }, [buildStrokeText, getCompositedImage, onSend, text]);
 
   const onInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -242,8 +261,8 @@ export default function DrawingCanvas({ image, onSend, onCancel }: DrawingCanvas
   );
 
   return (
-    <div className="relative h-screen w-screen bg-black text-zinc-100">
-      <div className="absolute inset-x-0 top-0 z-20 flex items-center gap-2 border-b border-zinc-800 bg-zinc-950/90 px-3 py-2 backdrop-blur">
+    <div className={`relative bg-black text-zinc-100 ${embedded ? "h-full w-full" : "h-screen w-screen"}`}>
+      <div className="absolute inset-x-0 top-0 z-20 flex flex-wrap items-center gap-2 border-b border-zinc-800 bg-zinc-950/90 px-3 py-2 backdrop-blur">
         <button
           onClick={() => setTool("pen")}
           className={`rounded px-2 py-1 text-sm ${tool === "pen" ? "bg-blue-600 text-white" : "bg-zinc-800 text-zinc-300"}`}
@@ -294,20 +313,22 @@ export default function DrawingCanvas({ image, onSend, onCancel }: DrawingCanvas
           <button onClick={clear} className="rounded bg-zinc-800 px-2 py-1 text-sm text-zinc-300">
             Clear
           </button>
-          <button onClick={onCancel} className="rounded bg-red-700 px-2 py-1 text-sm text-white">
-            Cancel
-          </button>
+          {!embedded && onCancel && (
+            <button onClick={onCancel} className="rounded bg-red-700 px-2 py-1 text-sm text-white">
+              Cancel
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex h-full w-full items-center justify-center p-2 pt-14 pb-20">
+      <div className={`flex h-full w-full items-center justify-center p-2 pt-14 ${embedded ? "" : "pb-20"}`}>
         <div className="relative max-h-full max-w-full">
           <img
             ref={imgRef}
             src={image}
             alt="Captured screen"
             onLoad={resizeCanvas}
-            className="max-h-[calc(100vh-8.5rem)] max-w-[calc(100vw-1rem)] object-contain"
+            className={embedded ? "max-h-[calc(100%-3.5rem)] max-w-full object-contain" : "max-h-[calc(100vh-8.5rem)] max-w-[calc(100vw-1rem)] object-contain"}
           />
           <canvas
             ref={canvasRef}
@@ -320,23 +341,27 @@ export default function DrawingCanvas({ image, onSend, onCancel }: DrawingCanvas
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 border-t border-zinc-800 bg-zinc-950/90 px-3 py-2 backdrop-blur">
-        <input
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={onInputKeyDown}
-          placeholder="Ask about this annotated screen..."
-          className="flex-1 rounded bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder-zinc-500 outline-none"
-        />
-        <button
-          onClick={handleSend}
-          disabled={!canSend}
-          className="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
-        >
-          Send to Model
-        </button>
-      </div>
+      {!embedded && (
+        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 border-t border-zinc-800 bg-zinc-950/90 px-3 py-2 backdrop-blur">
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={onInputKeyDown}
+            placeholder="Ask about this annotated screen..."
+            className="flex-1 rounded bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder-zinc-500 outline-none"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!canSend}
+            className="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+          >
+            Send to Model
+          </button>
+        </div>
+      )}
     </div>
   );
-}
+});
+
+export default DrawingCanvas;

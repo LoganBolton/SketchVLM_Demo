@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import ChatPanel, { MODELS } from "@/components/ChatPanel";
 import DrawingCanvas from "@/components/DrawingCanvas";
+import type { DrawingCanvasHandle } from "@/components/DrawingCanvas";
 import { readSSEStream } from "@/lib/sse";
 import { parseModelResponse } from "@/lib/parse-response";
 import type { Message } from "@/components/ChatPanel";
@@ -22,8 +23,11 @@ export default function Home() {
   const [model, setModel] = useState(MODELS[0].id);
   const [annotating, setAnnotating] = useState(false);
   const [annotationImage, setAnnotationImage] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const drawingCanvasRef = useRef<DrawingCanvasHandle>(null);
 
   const captureFrame = useCallback((): string | null => {
     const video = videoRef.current;
@@ -248,8 +252,47 @@ export default function Home() {
     setAnnotationImage(null);
   }, []);
 
+  const handleFileUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        setUploadedImage(dataUrl);
+        setMessages([]);
+        setInput("");
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    },
+    []
+  );
+
+  const handleUploadSend = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const text = input.trim();
+      if (!text || loading || !uploadedImage) return;
+
+      const handle = drawingCanvasRef.current;
+      let imageToSend = uploadedImage;
+      let strokeText: string | undefined;
+
+      if (handle && handle.hasStrokes()) {
+        const composited = await handle.getCompositedImage();
+        if (composited) imageToSend = composited;
+        strokeText = handle.getStrokeText();
+      }
+
+      setInput("");
+      await sendMessage(imageToSend, text, strokeText);
+    },
+    [input, loading, uploadedImage, sendMessage]
+  );
+
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-zinc-950 text-zinc-200">
+    <div className="flex h-screen flex-col bg-zinc-950 text-zinc-200">
       <video
         ref={videoRef}
         autoPlay
@@ -281,7 +324,7 @@ export default function Home() {
             onCancel={cancelAnnotation}
           />
         ) : (
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex h-full flex-col items-center justify-center gap-4">
           <div className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-green-500" />
             <span className="text-lg font-medium text-green-400">
@@ -308,19 +351,92 @@ export default function Home() {
           </button>
         </div>
         )
+      ) : uploadedImage ? (
+          <div className="flex h-screen w-full">
+            <div className="relative w-1/2 border-r border-zinc-800">
+              <DrawingCanvas
+                ref={drawingCanvasRef}
+                image={uploadedImage}
+                embedded
+              />
+              <button
+                onClick={() => {
+                  setUploadedImage(null);
+                  setMessages([]);
+                }}
+                className="absolute bottom-3 left-3 z-30 rounded bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-700"
+              >
+                Back
+              </button>
+            </div>
+            <div className="w-1/2">
+              <ChatPanel
+                messages={messages}
+                input={input}
+                loading={loading}
+                model={model}
+                onInputChange={setInput}
+                onSubmit={handleUploadSend}
+                onModelChange={setModel}
+              />
+            </div>
+          </div>
       ) : (
-        <div className="flex flex-col items-center gap-6">
-          <h1 className="text-2xl font-bold">SketchVLM Demo</h1>
-          <p className="max-w-md text-center text-sm text-zinc-500">
-            Share your screen, then chat with an AI about what it sees. The chat
-            floats on top of all your windows so you never lose it.
-          </p>
-          <button
-            onClick={startScreenShare}
-            className="rounded-lg bg-blue-600 px-6 py-3 text-lg font-medium text-white hover:bg-blue-700"
-          >
-            Share Screen
-          </button>
+        <div className="flex h-full w-full flex-col">
+          <div className="flex items-center justify-center border-b border-zinc-800 py-6">
+            <h1 className="text-2xl font-bold">SketchVLM</h1>
+          </div>
+          <div className="flex flex-1">
+          <div className="flex w-1/2 flex-col items-center justify-center border-r border-zinc-800">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600/10">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-8 w-8 text-blue-400">
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <path d="M8 21h8" />
+                  <path d="M12 17v4" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold">Share Screen</h2>
+              <p className="max-w-xs text-center text-sm text-zinc-500">
+                Share your screen and chat with AI about what it sees. The chat floats on top of your windows.
+              </p>
+              <button
+                onClick={startScreenShare}
+                className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Start Screen Share
+              </button>
+            </div>
+          </div>
+          <div className="flex w-1/2 flex-col items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600/10">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-8 w-8 text-emerald-400">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="m21 15-5-5L5 21" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold">Upload Photo</h2>
+              <p className="max-w-xs text-center text-sm text-zinc-500">
+                Upload an image and ask AI questions about it. Draw annotations directly on the photo.
+              </p>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-medium text-white hover:bg-emerald-700"
+              >
+                Choose Image
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </div>
+          </div>
+          </div>
         </div>
       )}
     </div>
