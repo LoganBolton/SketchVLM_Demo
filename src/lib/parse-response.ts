@@ -1,5 +1,5 @@
 export interface Annotation {
-  type: "circle" | "rect" | "text" | "arrow" | "number";
+  type: "circle" | "rect" | "text" | "arrow" | "number" | "path";
   color?: string;
   strokeWidth?: number;
   fill?: string;
@@ -22,6 +22,8 @@ export interface Annotation {
   y2?: number;
   // number
   value?: number;
+  // path
+  d?: string;
 }
 
 export interface ParsedResponse {

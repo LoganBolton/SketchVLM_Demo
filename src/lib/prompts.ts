@@ -15,7 +15,7 @@ REQUIRED OUTPUT FORMAT (output this exact structure, nothing else):
   "answer": "Your text explanation here",
   "annotations": [
     {
-      "type": "circle|rect|text|arrow|number",
+      "type": "circle|rect|text|arrow|number|path",
       ... element-specific properties ...
     }
   ]
@@ -89,6 +89,18 @@ Use to point at specific features or show direction.
   "strokeWidth": 10
 }
 
+### 6. PATH (for Bezier curves, outlines, paths)
+Use for tracing paths (maze solutions), drawing curves around irregular shapes, freeform annotations.
+- For straight lines: use "L" commands
+- For curves: use "Q" (quadratic) or "C" (cubic Bezier) commands
+{
+  "type": "path",
+  "d": "M 100 100 Q 150 50 200 100 L 250 150 C 300 200 350 150 400 200",
+  "color": "#0000FF",
+  "strokeWidth": 6,
+  "fill": "none"
+}
+
 ## Guidelines:
 
 1. **Coordinate System**: ALL coordinates use normalized 0-1000 range. (0,0) is top-left, (1000,1000) is bottom-right. Do NOT use pixel coordinates.
@@ -104,6 +116,7 @@ Use to point at specific features or show direction.
    - Counting objects → NUMBER labels on each object
    - Finding specific items → CIRCLE or RECT around them + TEXT labels
    - Showing direction/flow → ARROW
+   - Tracing paths, curves, or outlines → PATH with Bezier commands
    - Labeling parts → TEXT with ARROW pointing to them
 
 4. **Always annotate**: Even for simple questions, provide visual annotations to support your answer.

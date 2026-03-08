@@ -1,5 +1,10 @@
 import type { Annotation } from "@/lib/parse-response";
 
+/** Scale all numeric values in an SVG path `d` string from 0-1000 to 0-100. */
+function scalePath(d: string): string {
+  return d.replace(/-?\d+(\.\d+)?/g, (m) => String(parseFloat(m) / 10));
+}
+
 interface AnnotationOverlayProps {
   screenshot: string;
   annotations: Annotation[];
@@ -109,6 +114,19 @@ function renderAnnotation(ann: Annotation, i: number) {
         </g>
       );
     }
+
+    case "path":
+      return (
+        <path
+          key={i}
+          d={scalePath(ann.d ?? "")}
+          stroke={color}
+          strokeWidth={sw}
+          fill={ann.fill ?? "none"}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      );
 
     default:
       return null;
