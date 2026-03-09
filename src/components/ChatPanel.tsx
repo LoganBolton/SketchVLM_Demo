@@ -25,9 +25,37 @@ interface ChatPanelProps {
   onSubmit: (e: React.FormEvent) => void;
   onModelChange: (value: string) => void;
   onAnnotate?: () => void;
+  /** When true, renders colored <span> tags in assistant messages (color grounding). */
+  uploadMode?: boolean;
 }
 
 export { MODELS };
+
+/**
+ * Parse text that may contain <span style='color:#RRGGBB'>...</span> tags
+ * (from AI color grounding) and return React nodes with inline color styles.
+ * Only allows color spans — everything else is treated as plain text.
+ */
+function parseColoredText(text: string): React.ReactNode[] {
+  const pattern = /<span\s+style=['"]color:\s*(#[0-9a-fA-F]{3,8})['"]>([^<]*)<\/span>/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <span key={match.index} style={{ color: match[1], fontWeight: 600 }}>
+        {match[2]}
+      </span>
+    );
+    lastIndex = pattern.lastIndex;
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts;
+}
 
 export default function ChatPanel({
   messages,
@@ -38,6 +66,7 @@ export default function ChatPanel({
   onSubmit,
   onModelChange,
   onAnnotate,
+  uploadMode = false,
 }: ChatPanelProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,10 +84,12 @@ export default function ChatPanel({
       <header className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
         <h1 className="text-sm font-semibold">SketchVLM</h1>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-xs text-green-400">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-400" />
-            Live
-          </span>
+          {!uploadMode && (
+            <span className="flex items-center gap-1 text-xs text-green-400">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-400" />
+              Live
+            </span>
+          )}
           <select
             value={model}
             onChange={(e) => onModelChange(e.target.value)}
@@ -77,29 +108,27 @@ export default function ChatPanel({
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
             <p className="text-center text-xs text-zinc-500">
-              Ask about what&apos;s on screen
+              {uploadMode
+                ? "Ask about the image — annotations will appear live on the left"
+                : "Ask about what\u2019s on screen"}
             </p>
           </div>
         )}
+
         {messages.map((m, i) => (
           <div key={i} className="mb-2">
             <div className="mb-0.5 text-xs font-medium text-zinc-500">
               {m.role === "user" ? "You" : "AI"}
             </div>
 
-            {m.role === "assistant" &&
-              m.screenshot &&
-              m.annotations &&
-              m.annotations.length > 0 && (
-                <div className="mb-1.5">
-                  <AnnotationOverlay
-                    screenshot={m.screenshot}
-                    annotations={m.annotations}
-                  />
-                </div>
-              )}
+            {/* Screenshot with annotation overlay (screen-share mode only) */}
+            {!uploadMode && m.role === "assistant" && m.screenshot && m.annotations && m.annotations.length > 0 && (
+              <div className="mb-1.5">
+                <AnnotationOverlay screenshot={m.screenshot} annotations={m.annotations} />
+              </div>
+            )}
 
-            {m.role === "user" && m.screenshot && (
+            {!uploadMode && m.role === "user" && m.screenshot && (
               <div className="mb-1.5">
                 <img
                   src={m.screenshot}
@@ -116,7 +145,9 @@ export default function ChatPanel({
                   : "bg-zinc-900 text-zinc-300"
               }`}
             >
-              {m.content}
+              {m.role === "assistant" && uploadMode
+                ? parseColoredText(m.content)
+                : m.content}
               {m.role === "assistant" && m.content === "" && loading && (
                 <span className="inline-block animate-pulse text-zinc-500">
                   Thinking...
@@ -158,7 +189,7 @@ export default function ChatPanel({
           value={input}
           onChange={(e) => onInputChange(e.target.value)}
           disabled={loading}
-          placeholder="Ask about what's on screen..."
+          placeholder={uploadMode ? "Ask about the image..." : "Ask about what\u2019s on screen..."}
           className="flex-1 rounded bg-zinc-800 px-3 py-1.5 text-sm text-zinc-200 placeholder-zinc-500 outline-none"
         />
         <button
