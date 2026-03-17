@@ -1,5 +1,5 @@
 export interface Annotation {
-  type: "circle" | "rect" | "text" | "arrow" | "number" | "path";
+  type: "circle" | "rect" | "text" | "arrow" | "number" | "path" | "polygon";
   color?: string;
   strokeWidth?: number;
   fill?: string;
@@ -24,6 +24,8 @@ export interface Annotation {
   value?: number;
   // path
   d?: string;
+  // polygon: array of [x, y] pairs in 0-1000 space
+  points?: number[][];
 }
 
 export interface ParsedResponse {

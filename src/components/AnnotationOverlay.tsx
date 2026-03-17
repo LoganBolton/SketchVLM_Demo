@@ -128,6 +128,22 @@ function renderAnnotation(ann: Annotation, i: number) {
         />
       );
 
+    case "polygon": {
+      const pts = (ann.points ?? [])
+        .map(([x, y]) => `${(x / 1000) * 100},${(y / 1000) * 100}`)
+        .join(" ");
+      return (
+        <polygon
+          key={i}
+          points={pts}
+          stroke={color}
+          strokeWidth={sw}
+          fill={ann.fill ?? "none"}
+          strokeLinejoin="round"
+        />
+      );
+    }
+
     default:
       return null;
   }

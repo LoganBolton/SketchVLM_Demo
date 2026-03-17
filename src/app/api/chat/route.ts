@@ -7,7 +7,8 @@ export async function POST(req: NextRequest) {
     return new Response("OPENROUTER_API_KEY not configured", { status: 500 });
   }
 
-  const { messages, model } = await req.json();
+  const { messages, model, systemPrompt } = await req.json();
+  const PROMPT = typeof systemPrompt === "string" && systemPrompt ? systemPrompt : SYSTEM_PROMPT;
   const latestUserMessage = [...messages].reverse().find((m) => m.role === "user");
   const latestUserText = Array.isArray(latestUserMessage?.content)
     ? latestUserMessage.content
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: model || "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        messages: [{ role: "system", content: PROMPT }, ...messages],
         stream: true,
       }),
     }
@@ -41,7 +42,6 @@ export async function POST(req: NextRequest) {
   }
 
   const decoder = new TextDecoder();
-  const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
       if (!response.body) {
