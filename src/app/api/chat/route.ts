@@ -32,9 +32,14 @@ export async function POST(req: NextRequest) {
         model: model || "google/gemini-3-flash-preview",
         messages: [{ role: "system", content: PROMPT }, ...messages],
         stream: true,
+        ...(model === "google/gemini-3.1-pro-preview" && {
+          reasoning: { effort: "low" },
+        }),
       }),
     }
   );
+
+  console.log("[chat][request]", { model, reasoning: model === "google/gemini-3.1-pro-preview" ? "low" : "none" });
 
   if (!response.ok) {
     const errText = await response.text();

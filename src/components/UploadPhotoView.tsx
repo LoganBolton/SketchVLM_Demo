@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ChatPanel, { MODELS } from "@/components/ChatPanel";
 import type { Message } from "@/components/ChatPanel";
 import { parseModelResponse } from "@/lib/parse-response";
@@ -385,7 +385,7 @@ interface Props {
   initialPrompt?: string;
 }
 
-export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, initialPrompt = "" }: Props) {
+export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, initialPrompt }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const newImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -432,7 +432,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
 
   // chat
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input,    setInput]    = useState(initialPrompt);
+  const [input,    setInput]    = useState("");
   const [loading,  setLoading]  = useState(false);
   const [model,    setModel]    = useState(MODELS[0].id);
 
@@ -660,9 +660,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
   }, [previewAnn]);
 
   // ── chat / AI ─────────────────────────────────────────────────────────────
-  const handleSend = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
+  const sendText = useCallback(async (text: string) => {
     if (!text || loading) return;
     setInput("");
     setLoading(true);
@@ -729,7 +727,21 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
     } finally {
       setLoading(false);
     }
-  }, [input, loading, uploadedImage, messages, model, sendAnnotationText]);
+  }, [loading, uploadedImage, messages, model]);
+
+  const handleSend = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendText(input.trim());
+  }, [input, sendText]);
+
+  // Auto-send initial prompt on mount
+  const initialPromptSentRef = useRef(false);
+  useEffect(() => {
+    if (initialPrompt && !initialPromptSentRef.current) {
+      initialPromptSentRef.current = true;
+      sendText(initialPrompt);
+    }
+  }, [initialPrompt, sendText]);
 
   // ── render ────────────────────────────────────────────────────────────────
   return (
