@@ -433,7 +433,7 @@ export default function Home() {
                     ].map((ex, i) => (
                       <button
                         key={i}
-                        onClick={() => loadExample(ex.image, "Which bucket will the ball end up in once dropped?")}
+                        onClick={() => loadExample(ex.image, ex.label)}
                         className="group flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-zinc-800/60 transition-colors"
                       >
                         <img

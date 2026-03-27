@@ -432,7 +432,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
 
   // chat
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input,    setInput]    = useState(initialPrompt);
+  const [input,    setInput]    = useState("");
   const [loading,  setLoading]  = useState(false);
   const [model,    setModel]    = useState(MODELS[0].id);
 
