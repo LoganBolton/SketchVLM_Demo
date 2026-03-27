@@ -373,8 +373,8 @@ export default function Home() {
           <div className="flex items-center justify-center border-b border-zinc-800 py-6">
             <h1 className="text-2xl font-bold">SketchVLM</h1>
           </div>
-          <div className="flex flex-1 items-start justify-center pt-24">
-            <div className="flex w-1/2 flex-col items-center border-r border-zinc-800">
+          <div className="flex flex-1">
+            <div className="flex w-1/2 flex-col items-center border-r border-zinc-800 pt-24">
               <div className="flex flex-col items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600/10">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-8 w-8 text-blue-400">
@@ -383,9 +383,9 @@ export default function Home() {
                     <path d="M12 17v4" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold">Share Screen</h2>
-                <p className="max-w-xs text-center text-sm text-zinc-500">
-                  Share your screen and chat with AI about what it sees. The chat floats on top of your windows.
+                <h2 className="text-2xl font-semibold">Share Screen</h2>
+                <p className="max-w-xs text-center text-sm text-zinc-300">
+                  Allow the AI to see and annotate what's on your screen
                 </p>
                 <button
                   onClick={startScreenShare}
@@ -395,7 +395,7 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <div className="flex w-1/2 flex-col items-center">
+            <div className="flex w-1/2 flex-col items-center pt-24">
               <div className="flex flex-col items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600/10">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-8 w-8 text-emerald-400">
@@ -404,9 +404,9 @@ export default function Home() {
                     <path d="m21 15-5-5L5 21" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold">Upload Photo</h2>
-                <p className="max-w-xs text-center text-sm text-zinc-500">
-                  Upload an image and ask AI questions about it. Draw annotations directly on the photo.
+                <h2 className="text-2xl font-semibold">Upload Photo</h2>
+                <p className="max-w-xs text-center text-sm text-zinc-300">
+                  Upload an image and ask AI questions about it
                 </p>
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -424,12 +424,12 @@ export default function Home() {
 
                 {/* Example prompts */}
                 <div className="mt-6">
-                  <p className="mb-2 text-xs text-zinc-500">Try an example:</p>
+                  <p className="mb-2 text-sm text-zinc-300 text-center">Try an example:</p>
                   <div className="grid grid-cols-3 gap-4 px-8">
                     {[
-                      { image: "/sim_12_initial.png", label: "Ball drop prediction" },
-                      { image: "/sim_12_initial.png", label: "Bucket trajectory" },
-                      { image: "/sim_12_initial.png", label: "Physics simulation" },
+                      { image: "/sim_12_initial.png", label: "Which bucket will the ball end up in once dropped?" },
+                      { image: "/apple2.jpg", label: "Connect the dots in the image" },
+                      { image: "/motherboard.png", label: "I've got two sticks of ram, where should they go?" },
                     ].map((ex, i) => (
                       <button
                         key={i}
@@ -441,7 +441,7 @@ export default function Home() {
                           alt={ex.label}
                           className="w-full aspect-square rounded-md object-cover border border-zinc-700 group-hover:border-zinc-500 transition-colors"
                         />
-                        <span className="text-[10px] leading-tight text-zinc-500 group-hover:text-zinc-300 text-center transition-colors">
+                        <span className="text-xs leading-snug text-zinc-300 group-hover:text-zinc-100 text-center transition-colors">
                           {ex.label}
                         </span>
                       </button>

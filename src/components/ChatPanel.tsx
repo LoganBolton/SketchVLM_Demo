@@ -5,8 +5,8 @@ import AnnotationOverlay from "./AnnotationOverlay";
 import type { Annotation } from "@/lib/parse-response";
 
 const MODELS = [
+  { id: "google/gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
   { id: "google/gemini-3-flash-preview", label: "Gemini 3.0 Flash" },
-  { id: "google/gemini-3.1-flash-lite-preview", label: "Gemini 3.1 Flash Lite" },
 ];
 
 export interface Message {
