@@ -352,8 +352,12 @@ const IconPoint = () => (
 );
 const IconEraser = () => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-    <path d="M2 13 L6 13 L14 5 L11 2 L3 10 Z" />
-    <path d="M6 13 L3 10" />
+    {/* eraser body — tilted block with rubber end at bottom */}
+    <polygon points="4,2 13,2 13,10 4,10 1,6" />
+    {/* rubber-end divider */}
+    <line x1="4" y1="2" x2="4" y2="10" />
+    {/* X to indicate erase */}
+    <path d="M6.5 4.5 L10.5 7.5 M10.5 4.5 L6.5 7.5" />
   </svg>
 );
 
@@ -364,7 +368,7 @@ const TOOLS: { id: Tool; title: string; Icon: React.FC }[] = [
   { id: "rect",    title: "Rectangle",                           Icon: IconRect    },
   { id: "circle",  title: "Circle",                              Icon: IconCircle  },
   { id: "point",   title: "Point (filled dot)",                  Icon: IconPoint   },
-  { id: "eraser",  title: "Eraser (click annotation to delete)", Icon: IconEraser  },
+  { id: "eraser",  title: "Eraser (drag to erase annotations)",  Icon: IconEraser  },
 ];
 
 const PALETTE = ["#ff6b6b", "#00d9ff", "#4ecdc4", "#ffe66d", "#a8e6cf", "#ff8b94", "#ffffff"];
@@ -414,9 +418,12 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
   strokeWidthRef.current = strokeWidth;
   const allAnnotationsRef = useRef<Annotation[]>([]);
   allAnnotationsRef.current = allAnnotations;
+  const undoStackRef = useRef<UndoEntry[]>([]);
+  undoStackRef.current = undoStack;
 
   // UI
-  const [annotationsVisible, setAnnotationsVisible] = useState(true);
+  const [annotationsVisible,  setAnnotationsVisible]  = useState(true);
+  const [sendAnnotationText,  setSendAnnotationText]  = useState(false);
 
   // chat
   const [messages, setMessages] = useState<Message[]>([]);
@@ -443,27 +450,26 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
 
   // ── undo ─────────────────────────────────────────────────────────────────────
   const undo = useCallback(() => {
-    setUndoStack((prev) => {
-      if (prev.length === 0) return prev;
-      const entry = prev[prev.length - 1];
-      if (entry.op === "pop") {
-        setAllAnnotations((anns) => anns.slice(0, anns.length - entry.count));
-      } else if (entry.op === "insert") {
-        setAllAnnotations((anns) => {
-          const copy = [...anns];
-          copy.splice(entry.idx, 0, entry.ann);
-          return copy;
-        });
-      } else if (entry.op === "replace") {
-        setAllAnnotations((anns) => {
-          const copy = [...anns];
-          copy[entry.idx] = entry.prev;
-          return copy;
-        });
-      }
-      setSelectedIdx(null);
-      return prev.slice(0, -1);
-    });
+    const stack = undoStackRef.current;
+    if (stack.length === 0) return;
+    const entry = stack[stack.length - 1];
+    if (entry.op === "pop") {
+      setAllAnnotations((anns) => anns.slice(0, anns.length - entry.count));
+    } else if (entry.op === "insert") {
+      setAllAnnotations((anns) => {
+        const copy = [...anns];
+        copy.splice(entry.idx, 0, entry.ann);
+        return copy;
+      });
+    } else if (entry.op === "replace") {
+      setAllAnnotations((anns) => {
+        const copy = [...anns];
+        copy[entry.idx] = entry.prev;
+        return copy;
+      });
+    }
+    setSelectedIdx(null);
+    setUndoStack((prev) => prev.slice(0, -1));
   }, []);
 
   // ── erase one annotation ───────────────────────────────────────────────────
@@ -520,6 +526,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
     const sw = strokeWidthRef.current * 5;
 
     if (tool === "eraser") {
+      isDrawingRef.current = true;
       const idx = getAnnIdx(e.target);
       if (idx !== null) eraseAnnotation(idx);
       return;
@@ -560,6 +567,14 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
 
   const onPointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     const pt = toNorm(e);
+
+    // Eraser brush — erase any annotation under the pointer while dragging
+    if (activeToolRef.current === "eraser" && isDrawingRef.current) {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const idx = getAnnIdx(el);
+      if (idx !== null) eraseAnnotation(idx);
+      return;
+    }
 
     // Drag selected annotation
     if (dragRef.current) {
@@ -602,7 +617,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
         break;
       }
     }
-  }, [toNorm]);
+  }, [toNorm, eraseAnnotation]);
 
   const onPointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     // Finish drag → push undo entry if moved
@@ -652,6 +667,12 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
       ? await compositeAnnotations(uploadedImage, allAnnotationsRef.current)
       : uploadedImage;
 
+    const anns = allAnnotationsRef.current;
+    const annotationSuffix =
+      sendAnnotationText && anns.length > 0
+        ? `\n\n[ANNOTATION_CONTEXT]\nThe following annotations are currently drawn on the image (coordinates in 0–1000 range):\n${JSON.stringify(anns, null, 2)}`
+        : "";
+
     const userMsg: Message = { role: "user", content: text };
     // Only send image with the latest message; prior turns are text-only
     const apiMessages = [
@@ -660,12 +681,12 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
         role: "user" as const,
         content: [
           { type: "image_url" as const, image_url: { url: composited } },
-          { type: "text" as const, text },
+          { type: "text" as const, text: text + annotationSuffix },
         ],
       },
     ];
 
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg, { role: "assistant", content: "" }]);
 
     try {
       const res = await fetch("/api/chat", {
@@ -674,8 +695,6 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
         body: JSON.stringify({ messages: apiMessages, model, systemPrompt: UPLOAD_SYSTEM_PROMPT }),
       });
       if (!res.ok) throw new Error((await res.text()) || res.statusText);
-
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
       let fullText = "";
       await readSSEStream(res, (delta) => {
         fullText += delta;
@@ -705,7 +724,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
     } finally {
       setLoading(false);
     }
-  }, [input, loading, uploadedImage, messages, model]);
+  }, [input, loading, uploadedImage, messages, model, sendAnnotationText]);
 
   // ── render ────────────────────────────────────────────────────────────────
   return (
@@ -788,6 +807,16 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
             }`}
           >
             {annotationsVisible ? "Anns: ON" : "Anns: OFF"}
+          </button>
+
+          <button
+            onClick={() => setSendAnnotationText((v) => !v)}
+            title="When on, the structured annotation JSON is appended to your message so the model can read exact coordinates — helpful if it misses something in the image"
+            className={`flex h-8 items-center gap-1 rounded px-2 text-xs transition-colors ${
+              sendAnnotationText ? "bg-emerald-900/60 text-emerald-300" : "bg-zinc-800 text-zinc-500"
+            }`}
+          >
+            Text Ground: {sendAnnotationText ? "ON" : "OFF"}
           </button>
 
           <button

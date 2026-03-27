@@ -148,10 +148,23 @@ export default function ChatPanel({
               {m.role === "assistant" && uploadMode
                 ? parseColoredText(m.content)
                 : m.content}
-              {m.role === "assistant" && m.content === "" && loading && (
-                <span className="inline-block animate-pulse text-zinc-500">
-                  Thinking...
-                </span>
+              {m.role === "assistant" && loading && i === messages.length - 1 && (
+                m.content === "" ? (
+                  /* waiting for first token — "Thinking..." with animated dots */
+                  <span className="text-zinc-500 italic">
+                    Thinking
+                    {[0, 200, 400].map((delay) => (
+                      <span
+                        key={delay}
+                        className="inline-block animate-bounce"
+                        style={{ animationDelay: `${delay}ms` }}
+                      >.</span>
+                    ))}
+                  </span>
+                ) : (
+                  /* streaming — blinking cursor */
+                  <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-zinc-400 align-middle" />
+                )
               )}
             </div>
           </div>
