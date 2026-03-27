@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import ChatPanel, { MODELS } from "@/components/ChatPanel";
 import DrawingCanvas from "@/components/DrawingCanvas";
@@ -8,6 +8,13 @@ import UploadPhotoView from "@/components/UploadPhotoView";
 import { readSSEStream } from "@/lib/sse";
 import { parseModelResponse } from "@/lib/parse-response";
 import type { Message } from "@/components/ChatPanel";
+
+interface Sample {
+  id: string;
+  label: string;
+  imagePath: string;
+  prompt: string;
+}
 
 const MAX_CAPTURE_WIDTH = 1920;
 const JPEG_QUALITY = 0.7;
@@ -24,6 +31,12 @@ export default function Home() {
   const [annotating, setAnnotating] = useState(false);
   const [annotationImage, setAnnotationImage] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [initialPrompt, setInitialPrompt] = useState("");
+  const [samples, setSamples] = useState<Sample[]>([]);
+
+  useEffect(() => {
+    fetch("/api/samples").then((r) => r.json()).then(setSamples).catch(() => {});
+  }, []);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -255,6 +268,7 @@ export default function Home() {
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
+        setInitialPrompt("");
         setUploadedImage(reader.result as string);
       };
       reader.readAsDataURL(file);
@@ -263,6 +277,17 @@ export default function Home() {
     []
   );
 
+  const loadSample = useCallback(async (sample: Sample) => {
+    const res = await fetch(sample.imagePath);
+    const blob = await res.blob();
+    const reader = new FileReader();
+    reader.onload = () => {
+      setInitialPrompt(sample.prompt);
+      setUploadedImage(reader.result as string);
+    };
+    reader.readAsDataURL(blob);
+  }, []);
+
   // ── render ──────────────────────────────────────────────────────────────────
 
   // Upload Photo mode: full UploadPhotoView component
@@ -270,8 +295,9 @@ export default function Home() {
     return (
       <UploadPhotoView
         uploadedImage={uploadedImage}
-        onBack={() => setUploadedImage(null)}
-        onNewImage={(url) => setUploadedImage(url)}
+        onBack={() => { setUploadedImage(null); setInitialPrompt(""); }}
+        onNewImage={(url) => { setInitialPrompt(""); setUploadedImage(url); }}
+        initialPrompt={initialPrompt}
       />
     );
   }
@@ -389,6 +415,26 @@ export default function Home() {
                   onChange={handleFileUpload}
                   className="hidden"
                 />
+                <div className="mt-1 flex flex-col items-center gap-2">
+                  <span className="text-xs text-zinc-600">— or try a sample —</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {samples.map((sample) => (
+                      <button
+                        key={sample.id}
+                        onClick={() => loadSample(sample)}
+                        className="flex flex-col items-center overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800 transition-colors w-36"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={sample.imagePath}
+                          alt={sample.label}
+                          className="h-20 w-full object-cover"
+                        />
+                        <span className="py-1.5 text-xs text-zinc-400">{sample.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
