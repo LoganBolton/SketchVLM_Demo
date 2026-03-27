@@ -145,7 +145,7 @@ export default function ChatPanel({
                   : "bg-zinc-900 text-zinc-300"
               }`}
             >
-              {m.role === "assistant" && uploadMode
+              {m.role === "assistant"
                 ? parseColoredText(m.content)
                 : m.content}
               {m.role === "assistant" && loading && i === messages.length - 1 && (

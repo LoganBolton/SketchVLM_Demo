@@ -6,7 +6,7 @@ import type { Message } from "@/components/ChatPanel";
 import { parseModelResponse } from "@/lib/parse-response";
 import type { Annotation } from "@/lib/parse-response";
 import { readSSEStream } from "@/lib/sse";
-import { UPLOAD_SYSTEM_PROMPT } from "@/lib/prompts-upload";
+import { SYSTEM_PROMPT } from "@/lib/prompts";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -697,7 +697,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, model, systemPrompt: UPLOAD_SYSTEM_PROMPT }),
+        body: JSON.stringify({ messages: apiMessages, model, systemPrompt: SYSTEM_PROMPT }),
       });
       if (!res.ok) throw new Error((await res.text()) || res.statusText);
       let fullText = "";
