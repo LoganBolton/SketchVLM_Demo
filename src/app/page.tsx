@@ -384,7 +384,7 @@ export default function Home() {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-semibold">Share Screen</h2>
-                <p className="max-w-xs text-center text-sm text-zinc-300">
+                <p className="max-w-md text-center text-sm text-zinc-300">
                   Allow the AI to see and annotate what's on your screen
                 </p>
                 <button
