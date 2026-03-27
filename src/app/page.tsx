@@ -31,12 +31,7 @@ export default function Home() {
   const [annotating, setAnnotating] = useState(false);
   const [annotationImage, setAnnotationImage] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [initialPrompt, setInitialPrompt] = useState("");
-  const [samples, setSamples] = useState<Sample[]>([]);
-
-  useEffect(() => {
-    fetch("/api/samples").then((r) => r.json()).then(setSamples).catch(() => {});
-  }, []);
+  const [initialPrompt, setInitialPrompt] = useState<string | undefined>(undefined);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -291,12 +286,23 @@ export default function Home() {
   // ── render ──────────────────────────────────────────────────────────────────
 
   // Upload Photo mode: full UploadPhotoView component
+  const loadExample = async (imagePath: string, prompt: string) => {
+    const res = await fetch(imagePath);
+    const blob = await res.blob();
+    const reader = new FileReader();
+    reader.onload = () => {
+      setUploadedImage(reader.result as string);
+      setInitialPrompt(prompt);
+    };
+    reader.readAsDataURL(blob);
+  };
+
   if (uploadedImage) {
     return (
       <UploadPhotoView
         uploadedImage={uploadedImage}
-        onBack={() => { setUploadedImage(null); setInitialPrompt(""); }}
-        onNewImage={(url) => { setInitialPrompt(""); setUploadedImage(url); }}
+        onBack={() => { setUploadedImage(null); setInitialPrompt(undefined); }}
+        onNewImage={(url) => { setUploadedImage(url); setInitialPrompt(undefined); }}
         initialPrompt={initialPrompt}
       />
     );
@@ -367,8 +373,8 @@ export default function Home() {
           <div className="flex items-center justify-center border-b border-zinc-800 py-6">
             <h1 className="text-2xl font-bold">SketchVLM</h1>
           </div>
-          <div className="flex flex-1">
-            <div className="flex w-1/2 flex-col items-center justify-center border-r border-zinc-800">
+          <div className="flex flex-1 items-start justify-center pt-24">
+            <div className="flex w-1/2 flex-col items-center border-r border-zinc-800">
               <div className="flex flex-col items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600/10">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-8 w-8 text-blue-400">
@@ -389,7 +395,7 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <div className="flex w-1/2 flex-col items-center justify-center">
+            <div className="flex w-1/2 flex-col items-center">
               <div className="flex flex-col items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600/10">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-8 w-8 text-emerald-400">
@@ -415,22 +421,29 @@ export default function Home() {
                   onChange={handleFileUpload}
                   className="hidden"
                 />
-                <div className="mt-1 flex flex-col items-center gap-2">
-                  <span className="text-xs text-zinc-600">— or try a sample —</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {samples.map((sample) => (
+
+                {/* Example prompts */}
+                <div className="mt-6">
+                  <p className="mb-2 text-xs text-zinc-500">Try an example:</p>
+                  <div className="grid grid-cols-3 gap-4 px-8">
+                    {[
+                      { image: "/sim_12_initial.png", label: "Ball drop prediction" },
+                      { image: "/sim_12_initial.png", label: "Bucket trajectory" },
+                      { image: "/sim_12_initial.png", label: "Physics simulation" },
+                    ].map((ex, i) => (
                       <button
-                        key={sample.id}
-                        onClick={() => loadSample(sample)}
-                        className="flex flex-col items-center overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800 transition-colors w-36"
+                        key={i}
+                        onClick={() => loadExample(ex.image, "Which bucket will the ball end up in once dropped?")}
+                        className="group flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-zinc-800/60 transition-colors"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={sample.imagePath}
-                          alt={sample.label}
-                          className="h-20 w-full object-cover"
+                          src={ex.image}
+                          alt={ex.label}
+                          className="w-full aspect-square rounded-md object-cover border border-zinc-700 group-hover:border-zinc-500 transition-colors"
                         />
-                        <span className="py-1.5 text-xs text-zinc-400">{sample.label}</span>
+                        <span className="text-[10px] leading-tight text-zinc-500 group-hover:text-zinc-300 text-center transition-colors">
+                          {ex.label}
+                        </span>
                       </button>
                     ))}
                   </div>
