@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Annotation } from "@/lib/parse-response";
 
 /** Scale all numeric values in an SVG path `d` string from 0-1000 to 0-100. */
@@ -10,23 +11,20 @@ interface AnnotationOverlayProps {
   annotations: Annotation[];
 }
 
-function renderAnnotation(ann: Annotation, i: number) {
+function renderAnnotation(ann: Annotation, i: number, aspectRatio: number) {
   const color = ann.color ?? "#FF0000";
   const sw = ((ann.strokeWidth ?? 8) / 1000) * 100; // scale strokeWidth to viewBox %
 
   switch (ann.type) {
-    case "circle":
+    case "circle": {
+      const cx = (ann.cx! / 1000) * 100;
+      const cy = (ann.cy! / 1000) * 100;
+      const ry = (ann.r! / 1000) * 100;
       return (
-        <circle
-          key={i}
-          cx={(ann.cx! / 1000) * 100}
-          cy={(ann.cy! / 1000) * 100}
-          r={(ann.r! / 1000) * 100}
-          stroke={color}
-          strokeWidth={sw}
-          fill={ann.fill ?? "none"}
-        />
+        <ellipse key={i} cx={cx} cy={cy} rx={ry / aspectRatio} ry={ry}
+          stroke={color} strokeWidth={sw} fill={ann.fill ?? "none"} />
       );
+    }
 
     case "rect":
       return (
@@ -65,7 +63,7 @@ function renderAnnotation(ann: Annotation, i: number) {
       const r = 2.5; // fixed radius in viewBox units
       return (
         <g key={i}>
-          <circle cx={cx} cy={cy} r={r} fill={color} opacity={0.9} />
+          <ellipse cx={cx} cy={cy} rx={r / aspectRatio} ry={r} fill={color} opacity={0.9} />
           <text
             x={cx}
             y={cy}
@@ -153,6 +151,7 @@ export default function AnnotationOverlay({
   screenshot,
   annotations,
 }: AnnotationOverlayProps) {
+  const [aspectRatio, setAspectRatio] = useState(1);
   return (
     <div className="relative inline-block w-full">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -160,6 +159,7 @@ export default function AnnotationOverlay({
         src={screenshot}
         alt="Captured screenshot"
         className="block w-full rounded"
+        onLoad={(e) => setAspectRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
       />
       {annotations.length > 0 && (
         <svg
@@ -167,7 +167,7 @@ export default function AnnotationOverlay({
           preserveAspectRatio="none"
           className="absolute inset-0 h-full w-full rounded"
         >
-          {annotations.map((ann, i) => renderAnnotation(ann, i))}
+          {annotations.map((ann, i) => renderAnnotation(ann, i, aspectRatio))}
         </svg>
       )}
     </div>

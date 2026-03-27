@@ -185,7 +185,8 @@ function renderAnnSvg(
   ann: Annotation,
   idx: number,
   interactive: boolean,
-  selected: boolean
+  selected: boolean,
+  aspectRatio: number,
 ): React.ReactNode {
   const color = ann.color ?? "#FF0000";
   const sw = ((ann.strokeWidth ?? 8) / 1000) * 100;
@@ -197,15 +198,17 @@ function renderAnnSvg(
   const baseStyle: React.CSSProperties = { pointerEvents: pe, filter, cursor: interactive ? "move" : "default" };
 
   switch (ann.type) {
-    case "circle":
+    case "circle": {
+      const ry = v(ann.r!);
       return (
-        <circle
+        <ellipse
           key={idx} {...dataIdx}
-          cx={v(ann.cx!)} cy={v(ann.cy!)} r={v(ann.r!)}
+          cx={v(ann.cx!)} cy={v(ann.cy!)} rx={ry / aspectRatio} ry={ry}
           stroke={color} strokeWidth={sw} fill={ann.fill ?? "none"}
           style={baseStyle}
         />
       );
+    }
 
     case "rect":
       return (
@@ -234,7 +237,7 @@ function renderAnnSvg(
       const cx = v(ann.x!), cy = v(ann.y!), r = 2.5;
       return (
         <g key={idx} {...dataIdx} style={baseStyle}>
-          <circle cx={cx} cy={cy} r={r} fill={color} opacity={0.9} style={{ pointerEvents: "none" }} />
+          <ellipse cx={cx} cy={cy} rx={r / aspectRatio} ry={r} fill={color} opacity={0.9} style={{ pointerEvents: "none" }} />
           <text
             x={cx} y={cy} fill="#fff" fontSize={r * 1.2}
             textAnchor="middle" dominantBaseline="central" fontWeight="bold"
@@ -379,9 +382,10 @@ interface Props {
   uploadedImage: string;
   onBack: () => void;
   onNewImage?: (dataUrl: string) => void;
+  initialPrompt?: string;
 }
 
-export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: Props) {
+export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, initialPrompt = "" }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const newImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -424,10 +428,11 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
   // UI
   const [annotationsVisible,  setAnnotationsVisible]  = useState(true);
   const [sendAnnotationText,  setSendAnnotationText]  = useState(false);
+  const [imgAspect,           setImgAspect]           = useState(1);
 
   // chat
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input,    setInput]    = useState("");
+  const [input,    setInput]    = useState(initialPrompt);
   const [loading,  setLoading]  = useState(false);
   const [model,    setModel]    = useState(MODELS[0].id);
 
@@ -885,6 +890,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
               alt="Uploaded"
               className="block max-h-[calc(100vh-6rem)] max-w-full select-none"
               draggable={false}
+              onLoad={(e) => setImgAspect(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
             />
             <svg
               ref={svgRef}
@@ -899,9 +905,9 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage }: P
             >
               {annotationsVisible &&
                 allAnnotations.map((ann, i) =>
-                  renderAnnSvg(ann, i, interactive, selectedIdx === i)
+                  renderAnnSvg(ann, i, interactive, selectedIdx === i, imgAspect)
                 )}
-              {previewAnn && renderAnnSvg(previewAnn, -1, false, false)}
+              {previewAnn && renderAnnSvg(previewAnn, -1, false, false, imgAspect)}
             </svg>
           </div>
         </div>
