@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ChatPanel, { MODELS } from "@/components/ChatPanel";
-import type { Message } from "@/components/ChatPanel";
+import type { Message, ReasoningEffort } from "@/components/ChatPanel";
 import { parseModelResponse } from "@/lib/parse-response";
 import type { Annotation } from "@/lib/parse-response";
 import { readSSEStream } from "@/lib/sse";
@@ -435,6 +435,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
   const [input,    setInput]    = useState("");
   const [loading,  setLoading]  = useState(false);
   const [model,    setModel]    = useState(MODELS[0].id);
+  const [reasoning, setReasoning] = useState<ReasoningEffort>("low");
 
   // ── derived ──────────────────────────────────────────────────────────────────
   const interactive = activeTool === "select" || activeTool === "eraser";
@@ -695,7 +696,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, model, systemPrompt: SYSTEM_PROMPT }),
+        body: JSON.stringify({ messages: apiMessages, model, systemPrompt: SYSTEM_PROMPT, reasoningEffort: reasoning }),
       });
       if (!res.ok) throw new Error((await res.text()) || res.statusText);
       let fullText = "";
@@ -932,9 +933,11 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
           input={input}
           loading={loading}
           model={model}
+          reasoning={reasoning}
           onInputChange={setInput}
           onSubmit={handleSend}
           onModelChange={setModel}
+          onReasoningChange={setReasoning}
           uploadMode
         />
       </div>

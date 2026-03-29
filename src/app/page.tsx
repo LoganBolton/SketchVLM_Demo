@@ -7,7 +7,7 @@ import DrawingCanvas from "@/components/DrawingCanvas";
 import UploadPhotoView from "@/components/UploadPhotoView";
 import { readSSEStream } from "@/lib/sse";
 import { parseModelResponse } from "@/lib/parse-response";
-import type { Message } from "@/components/ChatPanel";
+import type { Message, ReasoningEffort } from "@/components/ChatPanel";
 
 interface Sample {
   id: string;
@@ -28,6 +28,7 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [model, setModel] = useState(MODELS[0].id);
+  const [reasoning, setReasoning] = useState<ReasoningEffort>("low");
   const [annotating, setAnnotating] = useState(false);
   const [annotationImage, setAnnotationImage] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -169,7 +170,7 @@ export default function Home() {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: apiMessages, model }),
+          body: JSON.stringify({ messages: apiMessages, model, reasoningEffort: reasoning }),
         });
 
         if (!res.ok) {
@@ -325,9 +326,11 @@ export default function Home() {
             input={input}
             loading={loading}
             model={model}
+            reasoning={reasoning}
             onInputChange={setInput}
             onSubmit={handleSend}
             onModelChange={setModel}
+            onReasoningChange={setReasoning}
             onAnnotate={startAnnotation}
           />,
           pipContainer
