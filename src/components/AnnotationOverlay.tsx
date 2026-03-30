@@ -84,31 +84,18 @@ function renderAnnotation(ann: Annotation, i: number, aspectRatio: number) {
       const y1 = (ann.y1! / 1000) * 100;
       const x2 = (ann.x2! / 1000) * 100;
       const y2 = (ann.y2! / 1000) * 100;
-      const markerId = `arrow-${i}`;
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const hl = Math.max(2, sw * 3);
+      const baseAX = x2 - hl * Math.cos(angle - Math.PI / 6);
+      const baseAY = y2 - hl * Math.sin(angle - Math.PI / 6);
+      const baseBX = x2 - hl * Math.cos(angle + Math.PI / 6);
+      const baseBY = y2 - hl * Math.sin(angle + Math.PI / 6);
+      const shaftX2 = x2 - hl * Math.cos(angle);
+      const shaftY2 = y2 - hl * Math.sin(angle);
       return (
         <g key={i}>
-          <defs>
-            <marker
-              id={markerId}
-              viewBox="0 0 10 10"
-              refX="9"
-              refY="5"
-              markerWidth="4"
-              markerHeight="4"
-              orient="auto-start-reverse"
-            >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
-            </marker>
-          </defs>
-          <line
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke={color}
-            strokeWidth={sw}
-            markerEnd={`url(#${markerId})`}
-          />
+          <line x1={x1} y1={y1} x2={shaftX2} y2={shaftY2} stroke={color} strokeWidth={sw} strokeLinecap="round" />
+          <polygon points={`${x2},${y2} ${baseAX},${baseAY} ${baseBX},${baseBY}`} fill={color} />
         </g>
       );
     }

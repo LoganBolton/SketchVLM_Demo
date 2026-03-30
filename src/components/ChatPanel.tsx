@@ -16,14 +16,18 @@ export interface Message {
   annotations?: Annotation[];
 }
 
+export type ReasoningEffort = "low" | "medium" | "high";
+
 interface ChatPanelProps {
   messages: Message[];
   input: string;
   loading: boolean;
   model: string;
+  reasoning: ReasoningEffort;
   onInputChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onModelChange: (value: string) => void;
+  onReasoningChange: (value: ReasoningEffort) => void;
   onAnnotate?: () => void;
   /** When true, renders colored <span> tags in assistant messages (color grounding). */
   uploadMode?: boolean;
@@ -57,14 +61,18 @@ function parseColoredText(text: string): React.ReactNode[] {
   return parts;
 }
 
+const isPro = (model: string) => model.includes("pro");
+
 export default function ChatPanel({
   messages,
   input,
   loading,
   model,
+  reasoning,
   onInputChange,
   onSubmit,
   onModelChange,
+  onReasoningChange,
   onAnnotate,
   uploadMode = false,
 }: ChatPanelProps) {
@@ -101,6 +109,18 @@ export default function ChatPanel({
               </option>
             ))}
           </select>
+          {isPro(model) && (
+            <select
+              value={reasoning}
+              onChange={(e) => onReasoningChange(e.target.value as ReasoningEffort)}
+              className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 outline-none"
+              title="Reasoning effort"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          )}
         </div>
       </header>
 

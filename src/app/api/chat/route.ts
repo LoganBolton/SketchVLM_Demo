@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     return new Response("OPENROUTER_API_KEY not configured", { status: 500 });
   }
 
-  const { messages, model, systemPrompt } = await req.json();
+  const { messages, model, systemPrompt, reasoningEffort } = await req.json();
   const PROMPT = typeof systemPrompt === "string" && systemPrompt ? systemPrompt : SYSTEM_PROMPT;
   const latestUserMessage = [...messages].reverse().find((m) => m.role === "user");
   const latestUserText = Array.isArray(latestUserMessage?.content)
@@ -33,13 +33,13 @@ export async function POST(req: NextRequest) {
         messages: [{ role: "system", content: PROMPT }, ...messages],
         stream: true,
         ...(model === "google/gemini-3.1-pro-preview" && {
-          reasoning: { effort: "low" },
+          reasoning: { effort: reasoningEffort ?? "low" },
         }),
       }),
     }
   );
 
-  console.log("[chat][request]", { model, reasoning: model === "google/gemini-3.1-pro-preview" ? "low" : "none" });
+  console.log("[chat][request]", { model, reasoning: model === "google/gemini-3.1-pro-preview" ? (reasoningEffort ?? "low") : "none" });
 
   if (!response.ok) {
     const errText = await response.text();
