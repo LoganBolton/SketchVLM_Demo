@@ -374,11 +374,11 @@ const TOOLS: { id: Tool; title: string; Icon: React.FC }[] = [
   { id: "arrow",   title: "Arrow",                               Icon: IconArrow   },
   { id: "rect",    title: "Rectangle",                           Icon: IconRect    },
   { id: "circle",  title: "Circle",                              Icon: IconCircle  },
-  { id: "point",   title: "Point (filled dot)",                  Icon: IconPoint   },
+  // { id: "point",   title: "Point (filled dot)",                  Icon: IconPoint   },
   { id: "eraser",  title: "Eraser (drag to erase annotations)",  Icon: IconEraser  },
 ];
 
-const PALETTE = ["#ff6b6b", "#00d9ff", "#4ecdc4", "#ffe66d", "#a8e6cf", "#ff8b94", "#ffffff"];
+const PALETTE = ["#ff6b6b", "#6b9fff", "#6bffb0"];
 
 // ─── main component ───────────────────────────────────────────────────────────
 
@@ -821,7 +821,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
             Undo
           </button>
 
-          <button
+          {/* <button
             onClick={() => setAnnotationsVisible((v) => !v)}
             title="Toggle annotation visibility"
             className={`flex h-8 items-center gap-1 rounded px-2 text-xs transition-colors ${
@@ -829,10 +829,10 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
             }`}
           >
             {annotationsVisible ? "Anns: ON" : "Anns: OFF"}
-          </button>
+          </button> */}
 
 
-          <button
+          {/* <button
             onClick={exportImage}
             title="Export image with annotations"
             className="flex h-8 items-center gap-1 rounded bg-zinc-800 px-2 text-xs text-zinc-300 hover:bg-zinc-700"
@@ -842,7 +842,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
               <path d="M2 13 L14 13" />
             </svg>
             Export
-          </button>
+          </button> */}
 
           <button
             onClick={clearAll}
