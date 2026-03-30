@@ -114,3 +114,58 @@ export function parseModelResponse(raw: string): ParsedResponse {
   // Fallback: treat entire response as plain text
   return { answer: raw, annotations: [] };
 }
+
+/**
+ * Extract complete annotation objects from a partial JSON stream.
+ * Locates the "annotations" array and uses brace-depth tracking
+ * (respecting strings) to find each complete {...} object.
+ */
+export function extractStreamingAnnotations(partialText: string): Annotation[] {
+  // Find the "annotations" key followed by an opening bracket
+  const keyMatch = partialText.match(/"annotations"\s*:\s*\[/);
+  if (!keyMatch || keyMatch.index === undefined) return [];
+
+  const arrayStart = keyMatch.index + keyMatch[0].length;
+  const annotations: Annotation[] = [];
+
+  let i = arrayStart;
+  while (i < partialText.length) {
+    // Skip whitespace and commas between objects
+    while (i < partialText.length && /[\s,]/.test(partialText[i])) i++;
+    if (i >= partialText.length || partialText[i] !== "{") break;
+
+    // Track brace depth to find the end of this object
+    const objStart = i;
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+
+    for (; i < partialText.length; i++) {
+      const ch = partialText[i];
+      if (escape) { escape = false; continue; }
+      if (ch === "\\") { escape = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (!inString) {
+        if (ch === "{") depth++;
+        else if (ch === "}") {
+          depth--;
+          if (depth === 0) {
+            i++; // move past closing brace
+            try {
+              const obj = JSON.parse(partialText.slice(objStart, i));
+              if (obj.type) annotations.push(obj as Annotation);
+            } catch {
+              // incomplete or malformed — skip
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    // If we never closed the object, stop scanning
+    if (depth !== 0) break;
+  }
+
+  return annotations;
+}

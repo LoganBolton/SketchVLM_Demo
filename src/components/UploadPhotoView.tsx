@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ChatPanel, { MODELS } from "@/components/ChatPanel";
 import type { Message, ReasoningEffort } from "@/components/ChatPanel";
-import { parseModelResponse } from "@/lib/parse-response";
+import { parseModelResponse, extractStreamingAnnotations } from "@/lib/parse-response";
 import type { Annotation } from "@/lib/parse-response";
 import { readSSEStream } from "@/lib/sse";
 import { SYSTEM_PROMPT } from "@/lib/prompts";
@@ -439,7 +439,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
   const [input,    setInput]    = useState("");
   const [loading,  setLoading]  = useState(false);
   const [model,    setModel]    = useState(MODELS[0].id);
-  const [reasoning, setReasoning] = useState<ReasoningEffort>("low");
+  const [reasoning, setReasoning] = useState<ReasoningEffort>("medium");
 
   // ── derived ──────────────────────────────────────────────────────────────────
   const interactive = activeTool === "select" || activeTool === "eraser";
@@ -704,6 +704,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
       });
       if (!res.ok) throw new Error((await res.text()) || res.statusText);
       let fullText = "";
+      let streamedAnnotationCount = 0;
       await readSSEStream(res, (delta) => {
         fullText += delta;
         setMessages((prev) => {
@@ -711,6 +712,14 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
           upd[upd.length - 1] = { role: "assistant", content: fullText };
           return upd;
         });
+
+        // Incrementally extract and render annotations as they stream in
+        const parsed = extractStreamingAnnotations(fullText);
+        if (parsed.length > streamedAnnotationCount) {
+          const newAnns = parsed.slice(streamedAnnotationCount);
+          streamedAnnotationCount = parsed.length;
+          setAllAnnotations((prev) => [...prev, ...newAnns]);
+        }
       });
 
       const parsed = parseModelResponse(fullText);
@@ -720,9 +729,14 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
         return upd;
       });
 
-      if (parsed.annotations.length > 0) {
-        setAllAnnotations((prev) => [...prev, ...parsed.annotations]);
-        setUndoStack((prev) => [...prev, { op: "pop", count: parsed.annotations.length }]);
+      // Only add annotations that weren't already added during streaming
+      const remainingAnns = parsed.annotations.slice(streamedAnnotationCount);
+      const totalCount = streamedAnnotationCount + remainingAnns.length;
+      if (remainingAnns.length > 0) {
+        setAllAnnotations((prev) => [...prev, ...remainingAnns]);
+      }
+      if (totalCount > 0) {
+        setUndoStack((prev) => [...prev, { op: "pop", count: totalCount }]);
       }
     } catch (err) {
       setMessages((prev) => [

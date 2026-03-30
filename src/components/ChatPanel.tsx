@@ -172,7 +172,7 @@ export default function ChatPanel({
                 m.content === "" ? (
                   /* waiting for first token — "Thinking..." with animated dots */
                   <span className="text-zinc-500 italic">
-                    Thinking
+                    Thinking{" "}
                     {[0, 200, 400].map((delay) => (
                       <span
                         key={delay}
