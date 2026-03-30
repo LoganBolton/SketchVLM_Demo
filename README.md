@@ -1,5 +1,6 @@
 # SketchVLM Demo
 
+
 Chat with a vision model about what's on your screen. The model can draw annotations (circles, arrows, boxes, labels) on screenshots to point things out.
 
 ## How it works
