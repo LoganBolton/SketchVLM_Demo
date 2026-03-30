@@ -430,7 +430,7 @@ export default function Home() {
                   <p className="mb-2 text-sm text-zinc-300 text-center">Try an example:</p>
                   <div className="grid grid-cols-3 gap-4 px-8">
                     {[
-                      { image: "/sim_12_initial.png", label: "Which bucket will the ball end up in once dropped?" },
+                      { image: "/sim_6_initial.png", label: "Which bucket will the ball end up in once dropped?" },
                       { image: "/apple2.jpg", label: "Connect the dots in the image" },
                       { image: "/motherboard.png", label: "I've got two sticks of ram, where should they go?" },
                     ].map((ex, i) => (

@@ -251,18 +251,22 @@ function renderAnnSvg(
 
     case "arrow": {
       const x1 = v(ann.x1!), y1 = v(ann.y1!), x2 = v(ann.x2!), y2 = v(ann.y2!);
-      const markerId = `arr-${idx}`;
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const hl = Math.max(2, sw * 3);
+      const baseAX = x2 - hl * Math.cos(angle - Math.PI / 6);
+      const baseAY = y2 - hl * Math.sin(angle - Math.PI / 6);
+      const baseBX = x2 - hl * Math.cos(angle + Math.PI / 6);
+      const baseBY = y2 - hl * Math.sin(angle + Math.PI / 6);
+      const shaftX2 = x2 - hl * Math.cos(angle);
+      const shaftY2 = y2 - hl * Math.sin(angle);
       return (
         <g key={idx} {...dataIdx} style={baseStyle}>
-          <defs>
-            <marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5"
-              markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
-            </marker>
-          </defs>
-          {/* invisible wide hit area for easier clicking */}
+          {/* invisible wide hit area */}
           <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="transparent" strokeWidth={Math.max(sw, 3)} style={{ pointerEvents: interactive ? "stroke" : "none" }} />
-          <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={sw} markerEnd={`url(#${markerId})`} style={{ pointerEvents: "none" }} />
+          {/* shaft stops at arrowhead base */}
+          <line x1={x1} y1={y1} x2={shaftX2} y2={shaftY2} stroke={color} strokeWidth={sw} strokeLinecap="round" style={{ pointerEvents: "none" }} />
+          {/* arrowhead triangle */}
+          <polygon points={`${x2},${y2} ${baseAX},${baseAY} ${baseBX},${baseBY}`} fill={color} style={{ pointerEvents: "none" }} />
         </g>
       );
     }
@@ -427,7 +431,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
 
   // UI
   const [annotationsVisible,  setAnnotationsVisible]  = useState(true);
-  const [sendAnnotationText,  setSendAnnotationText]  = useState(false);
+  const sendAnnotationText = true;
   const [imgAspect,           setImgAspect]           = useState(1);
 
   // chat
@@ -827,15 +831,6 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
             {annotationsVisible ? "Anns: ON" : "Anns: OFF"}
           </button>
 
-          <button
-            onClick={() => setSendAnnotationText((v) => !v)}
-            title="When on, the structured annotation JSON is appended to your message so the model can read exact coordinates — helpful if it misses something in the image"
-            className={`flex h-8 items-center gap-1 rounded px-2 text-xs transition-colors ${
-              sendAnnotationText ? "bg-emerald-900/60 text-emerald-300" : "bg-zinc-800 text-zinc-500"
-            }`}
-          >
-            Text Ground: {sendAnnotationText ? "ON" : "OFF"}
-          </button>
 
           <button
             onClick={exportImage}

@@ -36,6 +36,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
+  const currentStrokeRef = useRef<Stroke | null>(null);
 
   const [tool, setTool] = useState<Tool>("pen");
   const [color, setColor] = useState(COLORS[0]);
@@ -74,13 +75,16 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
       return;
     }
 
-    ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    ctx.lineTo(end.x, end.y);
-    ctx.stroke();
-
     const angle = Math.atan2(end.y - start.y, end.x - start.x);
     const headLength = Math.max(10, stroke.lineWidth * 3);
+    const shaftEndX = end.x - headLength * Math.cos(angle);
+    const shaftEndY = end.y - headLength * Math.sin(angle);
+
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(shaftEndX, shaftEndY);
+    ctx.stroke();
+
     ctx.beginPath();
     ctx.moveTo(end.x, end.y);
     ctx.lineTo(
@@ -160,6 +164,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
         lineWidth,
         points: tool === "pen" ? [point] : [point, point],
       };
+      currentStrokeRef.current = nextStroke;
       setCurrentStroke(nextStroke);
     },
     [color, getPoint, lineWidth, tool]
@@ -173,10 +178,11 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
       if (!point) return;
       setCurrentStroke((prev) => {
         if (!prev) return prev;
-        if (prev.tool === "pen") {
-          return { ...prev, points: [...prev.points, point] };
-        }
-        return { ...prev, points: [prev.points[0], point] };
+        const updated = prev.tool === "pen"
+          ? { ...prev, points: [...prev.points, point] }
+          : { ...prev, points: [prev.points[0], point] };
+        currentStrokeRef.current = updated;
+        return updated;
       });
     },
     [getPoint]
@@ -187,11 +193,10 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
     e.preventDefault();
     drawingRef.current = false;
     e.currentTarget.releasePointerCapture(e.pointerId);
-    setCurrentStroke((prev) => {
-      if (!prev) return null;
-      setStrokes((existing) => [...existing, prev]);
-      return null;
-    });
+    const stroke = currentStrokeRef.current;
+    currentStrokeRef.current = null;
+    setCurrentStroke(null);
+    if (stroke) setStrokes((existing) => [...existing, stroke]);
   }, []);
 
   const undo = useCallback(() => {
