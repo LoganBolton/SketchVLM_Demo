@@ -310,7 +310,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-950 text-zinc-200">
+    <div className="flex min-h-screen flex-col bg-zinc-950 text-zinc-200">
       <video
         ref={videoRef}
         autoPlay
@@ -432,15 +432,14 @@ export default function Home() {
                     {[
                       { image: "/sim_6_initial.png", label: "Which bucket will the ball end up in once dropped?" },
                       { image: "/apple2.jpg", label: "Connect the dots in the image" },
-                      { image: "/maze.jpg", label: "Is the path \"right, right, up, up\" from the green square to the red square a valid path?" },
+                      { image: "/maze.jpg", label: "Is the path \"right, right, up, up\" a valid path?", prompt: "Is the path \"right, right, up, up\" from the green square to the red square a valid path?" },
                       { image: "/count_people.webp", label: "Count each person in the image" },
-                      { image: "/rugby2.jpg", label: "Use rectangles to outline every instance of the classes \"players\" and \"sports-ball\"" },
-                      { image: "/blender.png", label: "Label using points and arrows: \"vapour_cover\", \"cover\", \"handle\", \"food_cup\", \"base\", \"switch\", \"cable\", \"seal ring\""},
-                      // { image: "/motherboard.png", label: "I've got two sticks of ram, where should they go?" },
+                      { image: "/rugby2.jpg", label: "Outline every player", prompt: "Use rectangles to outline every instance of the classes \"players\" and \"sports-ball\"" },
+                      { image: "/blender.png", label: "Label the parts of the image", prompt: "Label using points and arrows: \"vapour_cover\", \"cover\", \"handle\", \"food_cup\", \"base\", \"switch\", \"cable\", \"seal ring\"" },
                     ].map((ex, i) => (
                       <button
                         key={i}
-                        onClick={() => loadExample(ex.image, ex.label)}
+                        onClick={() => loadExample(ex.image, ex.prompt || ex.label)}
                         className="group flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-zinc-800/60 transition-colors"
                       >
                         <img
