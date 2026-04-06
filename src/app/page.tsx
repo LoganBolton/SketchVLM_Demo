@@ -432,7 +432,11 @@ export default function Home() {
                     {[
                       { image: "/sim_6_initial.png", label: "Which bucket will the ball end up in once dropped?" },
                       { image: "/apple2.jpg", label: "Connect the dots in the image" },
-                      { image: "/motherboard.png", label: "I've got two sticks of ram, where should they go?" },
+                      { image: "/maze.jpg", label: "Is the path \"right, right, up, up\" from the green square to the red square a valid path?" },
+                      { image: "/count_people.webp", label: "Count each person in the image" },
+                      { image: "/rugby2.jpg", label: "Use rectangles to outline every instance of the classes \"players\" and \"sports-ball\"" },
+                      { image: "/blender.png", label: "Label using points and arrows: \"vapour_cover\", \"cover\", \"handle\", \"food_cup\", \"base\", \"switch\", \"cable\", \"seal ring\""},
+                      // { image: "/motherboard.png", label: "I've got two sticks of ram, where should they go?" },
                     ].map((ex, i) => (
                       <button
                         key={i}
