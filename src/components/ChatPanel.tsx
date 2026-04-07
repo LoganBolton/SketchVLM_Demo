@@ -125,7 +125,7 @@ export default function ChatPanel({
           </div>
         )}
 
-        {messages.map((m, i) => (
+        {messages.map((m, i, arr) => (
           <div key={i} className="mb-2">
             <div className="mb-0.5 text-xs font-medium text-zinc-500">
               {m.role === "user" ? "You" : "AI"}
@@ -149,32 +149,25 @@ export default function ChatPanel({
             )}
 
             {m.role === "assistant" ? (
-              <>
-                {m.content !== "" && (
-                  <div
-                    className="rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-zinc-900 text-zinc-300"
-                    dangerouslySetInnerHTML={{ __html: formatAssistantHTML(m.content) }}
-                  />
-                )}
-                {loading && i === messages.length - 1 && (
-                  m.content === "" ? (
-                    <div className="rounded-lg px-3 py-2 text-sm bg-zinc-900">
-                      <span className="text-zinc-500 italic">
-                        Thinking{" "}
-                        {[0, 200, 400].map((delay) => (
-                          <span
-                            key={delay}
-                            className="inline-block animate-bounce"
-                            style={{ animationDelay: `${delay}ms` }}
-                          >.</span>
-                        ))}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-zinc-400 align-middle" />
-                  )
-                )}
-              </>
+              m.content === "" && loading && i === messages.length - 1 ? (
+                <div className="rounded-lg px-3 py-2 text-sm bg-zinc-900 text-zinc-300">
+                  <span className="text-zinc-500 italic">
+                    Thinking{" "}
+                    {[0, 200, 400].map((delay) => (
+                      <span
+                        key={delay}
+                        className="inline-block animate-bounce"
+                        style={{ animationDelay: `${delay}ms` }}
+                      >.</span>
+                    ))}
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className="rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-zinc-900 text-zinc-300"
+                  dangerouslySetInnerHTML={{ __html: formatAssistantHTML(m.content) }}
+                />
+              )
             ) : (
               <div className="rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-zinc-800 text-zinc-200">
                 {m.content}
