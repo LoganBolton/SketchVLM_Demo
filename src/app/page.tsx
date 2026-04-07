@@ -82,7 +82,7 @@ export default function Home() {
     }
 
     const pip = await window.documentPictureInPicture.requestWindow({
-      width: 600,
+      width: 450,
       height: 750,
     });
 
@@ -151,7 +151,7 @@ export default function Home() {
         ? `${text}\n\n[ANNOTATION_STROKES]\n${strokeText}`
         : text;
       const userMsg: Message = { role: "user", content: text, screenshot: image };
-      setMessages((prev) => [...prev, userMsg]);
+      setMessages((prev) => [...prev, userMsg, { role: "assistant" as const, content: "" }]);
       setLoading(true);
 
       const apiMessages = [...messages, userMsg].map((m, i, arr) => {
@@ -177,8 +177,6 @@ export default function Home() {
         if (!res.ok) {
           throw new Error((await res.text()) || res.statusText);
         }
-
-        setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
         let fullText = "";
         await readSSEStream(res, (delta) => {
