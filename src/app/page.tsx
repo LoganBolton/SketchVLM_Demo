@@ -374,11 +374,9 @@ export default function Home() {
         )
       ) : (
         <div className="flex h-full w-full flex-col">
-          <div className="flex items-center justify-center border-b border-zinc-800 py-6">
-            <h1 className="text-2xl font-bold">SketchVLM</h1>
-          </div>
+
           <div className="flex flex-1">
-            <div className="flex w-1/2 flex-col items-center border-r border-zinc-800 pt-24">
+            <div className="flex w-1/2 flex-col items-center border-r border-zinc-800 pt-2">
               <div className="flex flex-col items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600/10">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-8 w-8 text-blue-400">
@@ -399,7 +397,7 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <div className="flex w-1/2 flex-col items-center pt-24">
+            <div className="flex w-1/2 flex-col items-center pt-2">
               <div className="flex flex-col items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600/10">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-8 w-8 text-emerald-400">
@@ -442,12 +440,12 @@ export default function Home() {
                       <button
                         key={i}
                         onClick={() => loadExample(ex.image, ex.prompt || ex.label)}
-                        className="group flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-zinc-800/60 transition-colors"
+                        className={`group flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-zinc-800/60 transition-colors${i === 6 ? " col-span-3 max-w-[33%] mx-auto" : ""}`}
                       >
                         <img
                           src={ex.image}
                           alt={ex.label}
-                          className="w-full aspect-square rounded-md object-cover border border-zinc-700 group-hover:border-zinc-500 transition-colors"
+                          className="w-[90%] aspect-square rounded-md object-cover border border-zinc-700 group-hover:border-zinc-500 transition-colors"
                         />
                         <span className="text-xs leading-snug text-zinc-300 group-hover:text-zinc-100 text-center transition-colors">
                           {ex.label}
