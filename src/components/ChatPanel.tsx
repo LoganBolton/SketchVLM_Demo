@@ -150,10 +150,12 @@ export default function ChatPanel({
 
             {m.role === "assistant" ? (
               <>
-                <div
-                  className="rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-zinc-900 text-zinc-300"
-                  dangerouslySetInnerHTML={{ __html: formatAssistantHTML(m.content) }}
-                />
+                {m.content !== "" && (
+                  <div
+                    className="rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-zinc-900 text-zinc-300"
+                    dangerouslySetInnerHTML={{ __html: formatAssistantHTML(m.content) }}
+                  />
+                )}
                 {loading && i === messages.length - 1 && (
                   m.content === "" ? (
                     <div className="rounded-lg px-3 py-2 text-sm bg-zinc-900">
