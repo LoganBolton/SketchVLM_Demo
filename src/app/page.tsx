@@ -440,7 +440,7 @@ export default function Home() {
                       <button
                         key={i}
                         onClick={() => loadExample(ex.image, ex.prompt || ex.label)}
-                        className={`group flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-zinc-800/60 transition-colors${i === 6 ? " col-span-3 max-w-[33%] mx-auto" : ""}`}
+                        className={`group flex flex-col items-center gap-2 rounded-lg pt-3 px-3 hover:bg-zinc-700/80 transition-colors${i === 6 ? " col-span-3 max-w-[33%] mx-auto" : ""}`}
                       >
                         <img
                           src={ex.image}
