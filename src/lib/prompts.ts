@@ -114,10 +114,10 @@ Use to point at specific features or show direction.
   "type": "arrow",
   "x1": 100,
   "y1": 100,
-  "x2": 300,
-  "y2": 300,
+  "x2": 600,
+  "y2": 600,
   "color": "#FF0000",
-  "strokeWidth": 10
+  "strokeWidth": 15
 }
 
 ### 7. POLYGON (for irregular regions)
@@ -167,7 +167,11 @@ Use to outline irregular shapes with multiple points.
   "x2": 200,
   "y2": 220,
   "color": "#FF0000",
-  "strokeWidth": 10
+  "strokeWidth": 12
 }
+
+4. When you are showing the user where to click on the screen, add a rectangle around the area that the user should click on. Then, add an **arrow with strokeWidth 20** pointing to that rectangle. Also make the arrow length very long!
+
+5. The user's screen is very large, so make sure that the annotations are visible and readable. Use very large and thick annotations.
 
 FINAL REMINDER: Output ONLY raw JSON. No markdown, no code blocks, no explanations. Just the JSON object with "answer" and "annotations" fields. All coordinates in 0-1000 range.`;

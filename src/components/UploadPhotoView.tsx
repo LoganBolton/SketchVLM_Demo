@@ -8,6 +8,9 @@ import type { Annotation } from "@/lib/parse-response";
 import { readSSEStream } from "@/lib/sse";
 import { SYSTEM_PROMPT } from "@/lib/prompts";
 
+/** Adjust this to make all rendered annotations larger or smaller. 1.0 = original size. */
+const ANNOTATION_SCALE = 1.5;
+
 // ─── types ────────────────────────────────────────────────────────────────────
 
 type Tool = "select" | "pen" | "arrow" | "rect" | "circle" | "point" | "eraser";
@@ -85,7 +88,7 @@ function drawAnnotationToCanvas(
   const sx = (x: number) => (x / 1000) * w;
   const sy = (y: number) => (y / 1000) * h;
   const avgDim = Math.sqrt(w * h);
-  const lw = Math.max(0.5, ((ann.strokeWidth ?? 8) / 1000) * avgDim);
+  const lw = Math.max(0.5, ((ann.strokeWidth ?? 8) / 1000) * avgDim * ANNOTATION_SCALE);
   const color = ann.color ?? "#FF0000";
 
   ctx.save();
@@ -123,7 +126,7 @@ function drawAnnotationToCanvas(
       break;
     }
     case "text": {
-      const fs = Math.max(10, ((ann.fontSize ?? 20) / 1000) * avgDim);
+      const fs = Math.max(10, ((ann.fontSize ?? 20) / 1000) * avgDim * ANNOTATION_SCALE);
       ctx.font = `bold ${fs}px sans-serif`;
       ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
       ctx.strokeText(ann.content!, sx(ann.x!), sy(ann.y!));
@@ -131,7 +134,7 @@ function drawAnnotationToCanvas(
       break;
     }
     case "number": {
-      const r = (25 / 1000) * avgDim;
+      const r = (25 / 1000) * avgDim * ANNOTATION_SCALE;
       ctx.beginPath(); ctx.arc(sx(ann.x!), sy(ann.y!), r, 0, Math.PI * 2);
       ctx.fillStyle = color; ctx.fill();
       ctx.font = `bold ${r * 1.2}px sans-serif`;
@@ -189,7 +192,7 @@ function renderAnnSvg(
   aspectRatio: number,
 ): React.ReactNode {
   const color = ann.color ?? "#FF0000";
-  const sw = ((ann.strokeWidth ?? 8) / 1000) * 100;
+  const sw = ((ann.strokeWidth ?? 8) / 1000) * 100 * ANNOTATION_SCALE;
   const pe: React.CSSProperties["pointerEvents"] = interactive ? "auto" : "none";
   const filter = selected
     ? "drop-shadow(0 0 0.6px #00d9ff) drop-shadow(0 0 0.6px #00d9ff)"
@@ -225,7 +228,7 @@ function renderAnnSvg(
         <text
           key={idx} {...dataIdx}
           x={v(ann.x!)} y={v(ann.y!)} fill={color}
-          fontSize={v(ann.fontSize ?? 20)} fontWeight="bold"
+          fontSize={v(ann.fontSize ?? 20) * ANNOTATION_SCALE} fontWeight="bold"
           stroke="#000" strokeWidth={sw * 0.3} paintOrder="stroke"
           style={baseStyle}
         >
@@ -234,7 +237,7 @@ function renderAnnSvg(
       );
 
     case "number": {
-      const cx = v(ann.x!), cy = v(ann.y!), r = 2.5;
+      const cx = v(ann.x!), cy = v(ann.y!), r = 2.5 * ANNOTATION_SCALE;
       return (
         <g key={idx} {...dataIdx} style={baseStyle}>
           <ellipse cx={cx} cy={cy} rx={r / aspectRatio} ry={r} fill={color} opacity={0.9} style={{ pointerEvents: "none" }} />

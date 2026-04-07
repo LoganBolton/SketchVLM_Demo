@@ -1,6 +1,9 @@
 import { useState } from "react";
 import type { Annotation } from "@/lib/parse-response";
 
+/** Adjust this to make all rendered annotations larger or smaller. 1.0 = original size. */
+const ANNOTATION_SCALE = 1.5;
+
 /** Scale all numeric values in an SVG path `d` string from 0-1000 to 0-100. */
 function scalePath(d: string): string {
   return d.replace(/-?\d+(\.\d+)?/g, (m) => String(parseFloat(m) / 10));
@@ -13,7 +16,7 @@ interface AnnotationOverlayProps {
 
 function renderAnnotation(ann: Annotation, i: number, aspectRatio: number) {
   const color = ann.color ?? "#FF0000";
-  const sw = ((ann.strokeWidth ?? 8) / 1000) * 100; // scale strokeWidth to viewBox %
+  const sw = ((ann.strokeWidth ?? 8) / 1000) * 100 * ANNOTATION_SCALE;
 
   switch (ann.type) {
     case "circle": {
@@ -47,7 +50,7 @@ function renderAnnotation(ann: Annotation, i: number, aspectRatio: number) {
           x={(ann.x! / 1000) * 100}
           y={(ann.y! / 1000) * 100}
           fill={color}
-          fontSize={((ann.fontSize ?? 20) / 1000) * 100}
+          fontSize={((ann.fontSize ?? 20) / 1000) * 100 * ANNOTATION_SCALE}
           fontWeight="bold"
           stroke="#000"
           strokeWidth={sw * 0.3}
@@ -60,7 +63,7 @@ function renderAnnotation(ann: Annotation, i: number, aspectRatio: number) {
     case "number": {
       const cx = (ann.x! / 1000) * 100;
       const cy = (ann.y! / 1000) * 100;
-      const r = 2.5; // fixed radius in viewBox units
+      const r = 2.5 * ANNOTATION_SCALE;
       return (
         <g key={i}>
           <ellipse cx={cx} cy={cy} rx={r / aspectRatio} ry={r} fill={color} opacity={0.9} />
