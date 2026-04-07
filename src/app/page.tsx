@@ -124,7 +124,7 @@ export default function Home() {
 
       setStream(mediaStream);
       setSharing(true);
-      setReasoning("medium");
+      setReasoning("high");
       await openPip();
     } catch (err) {
       console.error("Screen share failed:", err);
