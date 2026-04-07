@@ -40,31 +40,15 @@ export { MODELS };
  * (from AI color grounding) and return React nodes with inline color styles.
  * Only allows color spans — everything else is treated as plain text.
  */
-function parseColoredText(text: string): React.ReactNode[] {
-  const pattern = /<span\s+style=['"]color:\s*(#[0-9a-fA-F]{3,8})['"]>([^<]*)<\/span>|<br\s*\/?>|\*\*(.+?)\*\*/g;
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = pattern.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index));
-    }
-    if (match[0].startsWith("<br")) {
-      parts.push(<br key={match.index} />);
-    } else if (match[0].startsWith("**")) {
-      parts.push(<strong key={match.index}>{match[3]}</strong>);
-    } else {
-      parts.push(
-        <span key={match.index} style={{ color: match[1], fontWeight: 600 }}>
-          {match[2]}
-        </span>
-      );
-    }
-    lastIndex = pattern.lastIndex;
-  }
-  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
-  return parts;
+function formatAssistantHTML(text: string): string {
+  // Convert **bold** markdown to <strong>
+  let html = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  // Sanitize: strip tags that aren't in our allowlist
+  const allowed = ["br", "strong", "b", "em", "i", "ol", "ul", "li", "p", "span", "code", "pre"];
+  html = html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (tag, name) => {
+    return allowed.includes(name.toLowerCase()) ? tag : "";
+  });
+  return html;
 }
 
 const isPro = (model: string) => model.includes("pro");
@@ -164,35 +148,36 @@ export default function ChatPanel({
               </div>
             )}
 
-            <div
-              className={`rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
-                m.role === "user"
-                  ? "bg-zinc-800 text-zinc-200"
-                  : "bg-zinc-900 text-zinc-300"
-              }`}
-            >
-              {m.role === "assistant"
-                ? parseColoredText(m.content)
-                : m.content}
-              {m.role === "assistant" && loading && i === messages.length - 1 && (
-                m.content === "" ? (
-                  /* waiting for first token — "Thinking..." with animated dots */
-                  <span className="text-zinc-500 italic">
-                    Thinking{" "}
-                    {[0, 200, 400].map((delay) => (
-                      <span
-                        key={delay}
-                        className="inline-block animate-bounce"
-                        style={{ animationDelay: `${delay}ms` }}
-                      >.</span>
-                    ))}
-                  </span>
-                ) : (
-                  /* streaming — blinking cursor */
-                  <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-zinc-400 align-middle" />
-                )
-              )}
-            </div>
+            {m.role === "assistant" ? (
+              <>
+                <div
+                  className="rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-zinc-900 text-zinc-300"
+                  dangerouslySetInnerHTML={{ __html: formatAssistantHTML(m.content) }}
+                />
+                {loading && i === messages.length - 1 && (
+                  m.content === "" ? (
+                    <div className="rounded-lg px-3 py-2 text-sm bg-zinc-900">
+                      <span className="text-zinc-500 italic">
+                        Thinking{" "}
+                        {[0, 200, 400].map((delay) => (
+                          <span
+                            key={delay}
+                            className="inline-block animate-bounce"
+                            style={{ animationDelay: `${delay}ms` }}
+                          >.</span>
+                        ))}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-zinc-400 align-middle" />
+                  )
+                )}
+              </>
+            ) : (
+              <div className="rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-zinc-800 text-zinc-200">
+                {m.content}
+              </div>
+            )}
           </div>
         ))}
         <div ref={chatEndRef} />
