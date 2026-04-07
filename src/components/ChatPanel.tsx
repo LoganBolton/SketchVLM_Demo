@@ -41,7 +41,7 @@ export { MODELS };
  * Only allows color spans — everything else is treated as plain text.
  */
 function parseColoredText(text: string): React.ReactNode[] {
-  const pattern = /<span\s+style=['"]color:\s*(#[0-9a-fA-F]{3,8})['"]>([^<]*)<\/span>/g;
+  const pattern = /<span\s+style=['"]color:\s*(#[0-9a-fA-F]{3,8})['"]>([^<]*)<\/span>|<br\s*\/?>|\*\*(.+?)\*\*/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -50,11 +50,17 @@ function parseColoredText(text: string): React.ReactNode[] {
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
     }
-    parts.push(
-      <span key={match.index} style={{ color: match[1], fontWeight: 600 }}>
-        {match[2]}
-      </span>
-    );
+    if (match[0].startsWith("<br")) {
+      parts.push(<br key={match.index} />);
+    } else if (match[0].startsWith("**")) {
+      parts.push(<strong key={match.index}>{match[3]}</strong>);
+    } else {
+      parts.push(
+        <span key={match.index} style={{ color: match[1], fontWeight: 600 }}>
+          {match[2]}
+        </span>
+      );
+    }
     lastIndex = pattern.lastIndex;
   }
   if (lastIndex < text.length) parts.push(text.slice(lastIndex));
