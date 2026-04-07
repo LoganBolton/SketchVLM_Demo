@@ -124,6 +124,7 @@ export default function Home() {
 
       setStream(mediaStream);
       setSharing(true);
+      setReasoning("medium");
       await openPip();
     } catch (err) {
       console.error("Screen share failed:", err);
@@ -436,6 +437,7 @@ export default function Home() {
                       { image: "/count_people.webp", label: "Count each person in the image" },
                       { image: "/rugby2.jpg", label: "Outline every player", prompt: "Use rectangles to outline every instance of the classes \"players\" and \"sports-ball\"" },
                       { image: "/blender.png", label: "Label the parts of the image", prompt: "Label using points and arrows: \"vapour_cover\", \"cover\", \"handle\", \"food_cup\", \"base\", \"switch\", \"cable\", \"seal ring\"" },
+                      { image: "/motherboard.png", label: "I've got two sticks of ram, where should they go?", prompt: "I've got two sticks of ram, where should they go?" },
                     ].map((ex, i) => (
                       <button
                         key={i}
