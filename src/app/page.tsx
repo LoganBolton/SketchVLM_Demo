@@ -445,7 +445,7 @@ export default function Home() {
                         <img
                           src={ex.image}
                           alt={ex.label}
-                          className="w-[90%] aspect-square rounded-md object-cover border border-zinc-700 group-hover:border-zinc-500 transition-colors"
+                          className="w-[90%] max-w-[150px] aspect-square rounded-md object-cover border border-zinc-700 group-hover:border-zinc-500 transition-colors"
                         />
                         <span className="text-xs leading-snug text-zinc-300 group-hover:text-zinc-100 text-center transition-colors">
                           {ex.label}
