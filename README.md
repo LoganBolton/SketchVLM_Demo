@@ -8,7 +8,7 @@ by  [Brandon Collins](https://brandon-collins7.github.io/)<sup>1</sup>, [Logan B
 
 <sup>1</sup>Auburn University, <sup>2</sup>Independent, <sup>3</sup>Adobe
 
-[![Website](https://img.shields.io/badge/Website-sketchvlm.github.io-4b4bce.svg)](https://sketchvlm.github.io/) [![arXiv](https://img.shields.io/badge/arXiv-2604.22875-b31b1b.svg)](https://arxiv.org/abs/2604.22875)
+[![Website](https://img.shields.io/badge/Website-sketchvlm.github.io-4b4bce.svg)](https://sketchvlm.github.io/) [![arXiv](https://img.shields.io/badge/arXiv-2604.22875-b31b1b.svg)](https://arxiv.org/abs/2604.22875) [![Data](https://img.shields.io/badge/🤗_Data-HuggingFace-yellow.svg)](https://huggingface.co/papers/2604.22875)
 
 
 ### 👉 [Try it Here!](https://sketch-vlm-demo.vercel.app/) 👈
