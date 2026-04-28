@@ -9,9 +9,7 @@ import { readSSEStream } from "@/lib/sse";
 import { SYSTEM_PROMPT } from "@/lib/prompts";
 
 /** Adjust this to make all rendered annotations larger or smaller. 1.0 = original size. */
-const ANNOTATION_SCALE = 1.5;
-
-// ─── types ────────────────────────────────────────────────────────────────────
+const ANNOTATION_SCALE = 1.0;
 
 type Tool = "select" | "pen" | "arrow" | "rect" | "circle" | "point" | "eraser";
 
@@ -19,8 +17,6 @@ type UndoEntry =
   | { op: "pop"; count: number }                              // undo adds → remove last N
   | { op: "insert"; idx: number; ann: Annotation }            // undo erase → insert back
   | { op: "replace"; idx: number; prev: Annotation };         // undo move → restore prev
-
-// ─── coordinate helpers ───────────────────────────────────────────────────────
 
 /** Scale annotation value (0–1000) → SVG viewBox (0–100). */
 const v = (n: number) => (n / 1000) * 100;

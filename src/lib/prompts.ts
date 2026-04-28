@@ -170,8 +170,4 @@ Use to outline irregular shapes with multiple points.
   "strokeWidth": 12
 }
 
-4. When you are showing the user where to click on the screen, add a rectangle around the area that the user should click on. Then, add an **arrow with strokeWidth 20** pointing to that rectangle. Also make the arrow length very long!
-
-5. The user's screen is very large, so make sure that the annotations are visible and readable. Use very large and thick annotations.
-
 FINAL REMINDER: Output ONLY raw JSON. No markdown, no code blocks, no explanations. Just the JSON object with "answer" and "annotations" fields. All coordinates in 0-1000 range.`;
