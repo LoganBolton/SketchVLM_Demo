@@ -1,15 +1,28 @@
-# SketchVLM Demo
+# SketchVLM Interactive Demo
+
+_A training-free, model-agnostic framework that enables VLMs to produce non-destructive, editable SVG overlays on the input image to visually explain their answers._
+
+<div align="center">    
+
+by  [Brandon Collins](https://brandon-collins7.github.io/)<sup>1</sup>, [Logan Bolton](https://loganbolton.github.io/)<sup>1</sup>, Hung Huy Nguyen<sup>1</sup>, [Mohammad Taesiri](https://taesiri.ai/)<sup>2</sup>, [Trung Bui](https://sites.google.com/site/trungbuistanford/)<sup>3</sup>, [Anh Nguyen](https://anhnguyen.me/research/)<sup>1</sup>
+
+<sup>1</sup>Auburn University, <sup>2</sup>Independent, <sup>3</sup>Adobe
+
+[![Website](https://img.shields.io/badge/Website-sketchvlm.github.io-4b4bce.svg)](https://sketchvlm.github.io/) [![arXiv](https://img.shields.io/badge/arXiv-2604.22875-b31b1b.svg)](https://arxiv.org/abs/2604.22875)
 
 
-Chat with a vision model about what's on your screen. The model can draw annotations (circles, arrows, boxes, labels) on screenshots to point things out.
+### 👉 [Try it Here!](https://sketch-vlm-demo.vercel.app/) 👈
 
-## How it works
+</div>
 
-1. User clicks "Share Screen" → `getDisplayMedia` captures a window/tab into a hidden `<video>` element (never displayed, only used for frame capture)
-2. A floating always-on-top chat window opens via the **Document Picture-in-Picture API** (Chrome/Edge only). React renders into it with `createPortal`.
-3. When the user sends a message, the current video frame is captured to a base64 JPEG and sent with the message to `/api/chat`
-4. The API route prepends a system prompt (instructs JSON output with `answer` + `annotations` in 0-1000 coords), proxies to OpenRouter, and streams the response back as SSE
-5. After streaming completes, the frontend parses the JSON → text answer goes in the chat, annotated screenshot (SVG overlay on the captured frame) is shown inline
+## Setup
+
+```
+npm install
+echo "OPENROUTER_API_KEY=sk-or-..." > .env.local  # add your OpenRouter key
+npm run dev
+```
+
 
 ## Key files
 
@@ -23,11 +36,3 @@ Chat with a vision model about what's on your screen. The model can draw annotat
 | `src/lib/parse-response.ts` | Robust JSON parser (handles markdown fences, nested braces, fallback to plain text) |
 | `src/lib/sse.ts` | SSE stream reader utility |
 | `src/types/document-pip.d.ts` | TypeScript types for Document PiP API |
-
-## Setup
-
-```
-npm install
-cp .env.local.example .env.local  # add your OPENROUTER_API_KEY
-npm run dev
-```
