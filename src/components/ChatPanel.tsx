@@ -5,8 +5,8 @@ import AnnotationOverlay from "./AnnotationOverlay";
 import type { Annotation } from "@/lib/parse-response";
 
 const MODELS = [
-  { id: "google/gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
-  { id: "google/gemini-3-flash-preview", label: "Gemini 3.0 Flash" },
+  { id: "gpt-6.1-sol", label: "GPT-6.1 Sol" },
+  { id: "gpt-6-luna", label: "GPT-6 Luna" },
 ];
 
 export interface Message {
@@ -50,8 +50,6 @@ function formatAssistantHTML(text: string): string {
   });
   return html;
 }
-
-const isPro = (model: string) => model.includes("pro");
 
 export default function ChatPanel({
   messages,
@@ -99,18 +97,16 @@ export default function ChatPanel({
               </option>
             ))}
           </select>
-          {isPro(model) && (
-            <select
-              value={reasoning}
-              onChange={(e) => onReasoningChange(e.target.value as ReasoningEffort)}
-              className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 outline-none"
-              title="Reasoning effort"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          )}
+          <select
+            value={reasoning}
+            onChange={(e) => onReasoningChange(e.target.value as ReasoningEffort)}
+            className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 outline-none"
+            title="Reasoning effort"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
         </div>
       </header>
 

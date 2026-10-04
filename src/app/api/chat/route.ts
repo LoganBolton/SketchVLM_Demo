@@ -1,13 +1,19 @@
 import { NextRequest } from "next/server";
 import { SYSTEM_PROMPT } from "@/lib/prompts";
 
+const MODELS = new Set(["gpt-6.1-sol", "gpt-6-luna"]);
+
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const { messages, model, systemPrompt, reasoningEffort } = await req.json();
+  const selectedModel = model || "gpt-6.1-sol";
+  if (!MODELS.has(selectedModel)) {
+    return new Response("Unsupported model", { status: 400 });
+  }
+  const apiKey = process.env.SKETCHVLM_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return new Response("OPENROUTER_API_KEY not configured", { status: 500 });
+    return new Response("SKETCHVLM_OPENAI_API_KEY or OPENAI_API_KEY not configured", { status: 500 });
   }
 
-  const { messages, model, systemPrompt, reasoningEffort } = await req.json();
   const PROMPT = typeof systemPrompt === "string" && systemPrompt ? systemPrompt : SYSTEM_PROMPT;
   const latestUserMessage = [...messages].reverse().find((m) => m.role === "user");
   const latestUserText = Array.isArray(latestUserMessage?.content)
@@ -18,28 +24,21 @@ export async function POST(req: NextRequest) {
     : String(latestUserMessage?.content || "");
   console.log("[chat][user]", latestUserText);
 
-  const response = await fetch(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://sketchvlm-demo.vercel.app",
-        "X-Title": "SketchVLM Demo",
-      },
-      body: JSON.stringify({
-        model: model || "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: PROMPT }, ...messages],
-        stream: true,
-        ...(model === "google/gemini-3.1-pro-preview" && {
-          reasoning: { effort: reasoningEffort ?? "low" },
-        }),
-      }),
-    }
-  );
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: selectedModel,
+      messages: [{ role: "system", content: PROMPT }, ...messages],
+      stream: true,
+      reasoning_effort: reasoningEffort ?? "low",
+    }),
+  });
 
-  console.log("[chat][request]", { model, reasoning: model === "google/gemini-3.1-pro-preview" ? (reasoningEffort ?? "low") : "none" });
+  console.log("[chat][request]", { model: selectedModel, reasoning: reasoningEffort ?? "low" });
 
   if (!response.ok) {
     const errText = await response.text();

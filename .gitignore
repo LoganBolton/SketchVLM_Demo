@@ -15,6 +15,10 @@
 
 # next.js
 /.next/
+/.next-2/
+/.next-3/
+/example-results/
+__pycache__/
 /out/
 
 # production

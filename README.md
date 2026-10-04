@@ -19,9 +19,11 @@ by  [Brandon Collins](https://brandon-collins7.github.io/)<sup>1</sup>, [Logan B
 
 ```
 npm install
-echo "OPENROUTER_API_KEY=sk-or-..." > .env.local  # add your OpenRouter key
+echo "SKETCHVLM_OPENAI_API_KEY=sk-proj-..." > .env.local  # add your OpenAI key
 npm run dev
 ```
+
+The model picker offers GPT-6.1 Sol and GPT-6 Luna. Both default to Low reasoning. The app also accepts `OPENAI_API_KEY`, but the project-specific variable takes precedence. Run `npm run dev:2` and then `python3 scripts/run_examples.py` to save all bundled example responses and a local HTML gallery in `example-results/`. Run `python3 scripts/render_results.py` to create PNG overlays and a contact sheet.
 
 
 ## Key files
@@ -31,7 +33,7 @@ npm run dev
 | `src/app/page.tsx` | Main page: screen share, PiP window management, frame capture, message send/stream, annotation state |
 | `src/components/ChatPanel.tsx` | Chat UI rendered inside the PiP window (messages, input, model selector) |
 | `src/components/AnnotationOverlay.tsx` | Renders screenshot + SVG annotations (circle, rect, arrow, text, number) |
-| `src/app/api/chat/route.ts` | Backend: prepends system prompt, proxies to OpenRouter with streaming |
+| `src/app/api/chat/route.ts` | Backend: prepends system prompt, proxies to OpenAI with streaming |
 | `src/lib/prompts.ts` | System prompt for structured JSON + annotation output |
 | `src/lib/parse-response.ts` | Robust JSON parser (handles markdown fences, nested braces, fallback to plain text) |
 | `src/lib/sse.ts` | SSE stream reader utility |

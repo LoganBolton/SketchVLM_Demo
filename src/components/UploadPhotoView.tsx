@@ -438,7 +438,7 @@ export default function UploadPhotoView({ uploadedImage, onBack, onNewImage, ini
   const [input,    setInput]    = useState("");
   const [loading,  setLoading]  = useState(false);
   const [model,    setModel]    = useState(MODELS[0].id);
-  const [reasoning, setReasoning] = useState<ReasoningEffort>("medium");
+  const [reasoning, setReasoning] = useState<ReasoningEffort>("low");
 
   // ── derived ──────────────────────────────────────────────────────────────────
   const interactive = activeTool === "select" || activeTool === "eraser";
